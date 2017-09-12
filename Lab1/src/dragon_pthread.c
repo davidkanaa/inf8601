@@ -140,6 +140,9 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 	piece_init(&master);
 
 	/* 1. ALlouer de l'espace pour threads et threads_data. */
+	threads = std::calloc(nb_thread, sizeof(pthread_t));
+	thread_data = std::calloc(nb_thread, sizeof(limit_data))
+
 	/* 2. Lancement du calcul en parallèle avec dragon_limit_worker. */
 	/* 3. Attendre la fin du traitement. */
 
