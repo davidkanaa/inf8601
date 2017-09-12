@@ -141,10 +141,37 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 
 	/* 1. ALlouer de l'espace pour threads et threads_data. */
 	threads = std::calloc(nb_thread, sizeof(pthread_t));
-	thread_data = std::calloc(nb_thread, sizeof(limit_data))
+	thread_data = std::calloc(nb_thread, sizeof(struct limit_data));
+
 
 	/* 2. Lancement du calcul en parallèle avec dragon_limit_worker. */
+	for (i = 0; i < nb_thread; i++)
+	{
+		// initalize the `thread_data`.
+		struct limit_data l = thread_data[i];
+		piece_t piece;
+
+		l.id = i;
+		l.start = i * size / nb_thread;
+		l.end = (i + 1) * size / nb_thread;	
+		l.piece = piece_init(&piece);
+
+		// create the thread and run the routine.
+		pthread_create(threads[i], NULL, dragon_limit_worker, l);
+	}
+
+	
 	/* 3. Attendre la fin du traitement. */
+	for (int id = 0; id < nb_thread; id++)
+	{
+		pthread_join(id, NULL);
+	}
+	
+	// merge all limits into one object.
+	for (int id = 0; id < nb_thread; id++)
+	{
+		piece_merge(&master, thread_data[id].piece);
+	}
 
 done:
 	FREE(threads);
