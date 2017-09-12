@@ -158,7 +158,7 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 		l.piece = piece;
 
 		// create the thread and run the routine.
-		pthread_create(threads[i], NULL, dragon_limit_worker, (void *)l);
+		pthread_create(threads[i], NULL, dragon_limit_worker, &l);
 	}
 
 	
