@@ -150,11 +150,12 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 		// initalize the `thread_data`.
 		struct limit_data l = thread_data[i];
 		piece_t piece;
+		piece_init(&piece);
 
 		l.id = i;
 		l.start = i * size / nb_thread;
 		l.end = (i + 1) * size / nb_thread;	
-		l.piece = piece_init(&piece);
+		l.piece = piece;
 
 		// create the thread and run the routine.
 		pthread_create(threads[i], NULL, dragon_limit_worker, l);
