@@ -140,8 +140,8 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 	piece_init(&master);
 
 	/* 1. ALlouer de l'espace pour threads et threads_data. */
-	if ((threads = (pthread_t *)calloc(nb_thread, sizeof(pthread_t)) == NULL)) goto err;
-	if ((thread_data = (struct limit_data *)calloc(nb_thread, sizeof(struct limit_data))) goto err;
+	if ((threads = (pthread_t *)calloc(nb_thread, sizeof(pthread_t))) == NULL) goto err;
+	if ((thread_data = (struct limit_data *)calloc(nb_thread, sizeof(struct limit_data))) == NULL) goto err;
 
 
 	/* 2. Lancement du calcul en parallèle avec dragon_limit_worker. */
