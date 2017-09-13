@@ -154,7 +154,7 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 		thread_data[i].piece = master;
 
 		// create the thread and run the routine.
-		if (pthread_create(threads + i, NULL, dragon_limit_worker, thread_data + i) != 0) goto err;
+		if (pthread_create(&threads[i], NULL, dragon_limit_worker, &thread_data[i]) != 0) goto err;
 	}
 
 	
