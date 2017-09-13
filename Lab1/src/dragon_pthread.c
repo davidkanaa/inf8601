@@ -161,7 +161,7 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 	/* 3. Attendre la fin du traitement. */
 	for (int id = 0; id < nb_thread; id++)
 	{
-		pthread_join(id, NULL);
+		pthread_join(threads[id], NULL);
 	}
 	
 	// merge all limits into one object.
