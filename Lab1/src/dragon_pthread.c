@@ -140,8 +140,8 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 	piece_init(&master);
 
 	/* 1. ALlouer de l'espace pour threads et threads_data. */
-	threads = (pthread_t *)calloc(nb_thread, sizeof(pthread_t));
-	thread_data = (struct limit_data *)calloc(nb_thread, sizeof(struct limit_data));
+	if ((threads = (pthread_t *)calloc(nb_thread, sizeof(pthread_t)) == NULL) goto err);
+	if ((thread_data = (struct limit_data *)calloc(nb_thread, sizeof(struct limit_data)) goto err);
 
 
 	/* 2. Lancement du calcul en parallèle avec dragon_limit_worker. */
@@ -149,16 +149,14 @@ int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 	{
 		// initalize the `thread_data`.
 		struct limit_data l = thread_data[i];
-		piece_t piece;
-		piece_init(&piece);
 
 		l.id = i;
 		l.start = i * size / nb_thread;
 		l.end = (i + 1) * size / nb_thread;	
-		l.piece = piece;
+		l.piece = master;
 
 		// create the thread and run the routine.
-		pthread_create(threads[i], NULL, dragon_limit_worker, &l);
+		if (pthread_create(threads[i], NULL, dragon_limit_worker, &l) != 0) goto NULL;
 	}
 
 	
