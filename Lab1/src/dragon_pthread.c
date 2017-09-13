@@ -129,7 +129,7 @@ void *dragon_limit_worker(void *data)
  */
 int dragon_limits_pthread(limits_t *limits, uint64_t size, int nb_thread)
 {
-	TODO("dragon_limits_pthread");
+	//TODO("dragon_limits_pthread");
 
 	int ret = 0;
 	int i;
