@@ -31,14 +31,43 @@ void printf_threadsafe(char *format, ...)
 void *dragon_draw_worker(void *data)
 {
 	/* 1. Initialiser la surface */
+	struct draw_data *drawdata = (struct draw_data *) data;
+
+	// Computing the real size (pixels ?) of the surface to be drawn
+	int surface = drawdata->dragon_width*drawdata->dragon_height;
+	// Each thread canvas represent a portion of the full canvas (as seen in serial)
+	int start_canvas = surface * drawdata->id/drawdata->nb_thread;
+	int end_canvas = surface * (drawdata->id+1)/drawdata->nb_thread;
+
+	init_canvas(start_canvas, end_canvas, drawdata->dragon,-1);
+
+	// We wait until all threads have initialized their canvas
+	pthread_barrier_wait(drawdata->barrier);
+
 	/* 2. Dessiner le dragon */
+	// The number of threads seems to be equivalent to the number of colors in the serial version
+	uint64_t start = drawdata->id * drawdata->size / nb_threads;
+	uint64_t end = (drawdata->id + 1) * drawdata->size / nb_threads;
+	dragon_draw_raw(start, end, drawdata->dragon, drawdata->dragon_width, drawdata->dragon_height, drawdata->limits, drawdata->id);
+
+	// We wait until all threads have painted the raw matrix
+	pthread_barrier_wait(drawdata->barrier);
+
 	/* 3. Effectuer le rendu final */
+	//
+	int start_final = drawdata->id * drawdata->image_height /drawdata->nb_thread;
+	int end_final = (drawdata->id + 1) * drawdata->image_height / drawdata->nb_thread;
+	scale_dragon(start_final, end_final, drawdata->image, drawdata->image_width, drawdata->image_height, drawdata->dragon, drawdata->dragon_width, drawdata->dragon_height, drawdata->palette);
+	
+	// We wait until all threads have painted the scaled dragon
+	pthread_barrier_wait(drawdata->barrier);
+	
 	return NULL;
 }
 
 int dragon_draw_pthread(char **canvas, struct rgb *image, int width, int height, uint64_t size, int nb_thread)
 {
-	TODO("dragon_draw_pthread");
+	//TODO("dragon_draw_pthread");
 
 	pthread_t *threads = NULL;
 	pthread_barrier_t barrier;
@@ -58,6 +87,8 @@ int dragon_draw_pthread(char **canvas, struct rgb *image, int width, int height,
 		goto err;
 
 	/* 1. Initialiser barrier. */
+	if (pthread_barrier_init(&barrier, NULL, nb_thread) != 0)
+		goto err;
 
 	if (dragon_limits_pthread(&lim, size, nb_thread) < 0)
 		goto err;
@@ -98,11 +129,27 @@ int dragon_draw_pthread(char **canvas, struct rgb *image, int width, int height,
 	info.image = image;
 
 	/* 2. Lancement du calcul parallèle principal avec draw_dragon_worker */
+	int i=0;
+	for (i = 0; i < nb_thread; i++)
+	{
+		// initalize the `thread_data`.
+		info.id = i;
+		data[i] = info;
+		// create the thread and run the routine.
+		if (pthread_create(&threads[i], NULL, dragon_draw_worker, &data[i]) != 0) goto err;
+	}
 
 	/* 3. Attendre la fin du traitement */
+	for (int id = 0; id < nb_thread; id++)
+	{
+		pthread_join(threads[id], NULL);
+	}
 
-	/* 4. Destruction des variables (à compléter). */ 
-
+	/* 4. Destruction des variables (à compléter). */
+	// After all threads are done, we can destroy the barrier
+	if (pthread_barrier_destroy(&barrier) != 0) 
+		goto err;
+	
 done:
 	FREE(data);
 	FREE(threads);
