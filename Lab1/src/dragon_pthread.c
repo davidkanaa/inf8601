@@ -46,8 +46,8 @@ void *dragon_draw_worker(void *data)
 
 	/* 2. Dessiner le dragon */
 	// The number of threads seems to be equivalent to the number of colors in the serial version
-	uint64_t start = drawdata->id * drawdata->size / nb_thread;
-	uint64_t end = (drawdata->id + 1) * drawdata->size / nb_thread;
+	uint64_t start = drawdata->id * drawdata->size / drawdata->nb_thread;
+	uint64_t end = (drawdata->id + 1) * drawdata->size / drawdata->nb_thread;
 	dragon_draw_raw(start, end, drawdata->dragon, drawdata->dragon_width, drawdata->dragon_height, drawdata->limits, drawdata->id);
 
 	// We wait until all threads have painted the raw matrix
