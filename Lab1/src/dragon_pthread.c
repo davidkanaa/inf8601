@@ -129,7 +129,6 @@ int dragon_draw_pthread(char **canvas, struct rgb *image, int width, int height,
 	info.image = image;
 
 	/* 2. Lancement du calcul parallèle principal avec draw_dragon_worker */
-	int i=0;
 	for (i = 0; i < nb_thread; i++)
 	{
 		// initalize the `thread_data`.
