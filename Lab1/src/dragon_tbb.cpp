@@ -41,7 +41,7 @@ class DragonLimits {
 
 		void join(DragonLimits &lim)
 		{
-			piece_merge(lim.master, master);
+			piece_merge(&master, lim.master);
 		}
 
 		DragonLimits(DragonLimits &x, split)
