@@ -24,7 +24,10 @@ class DragonLimits {
 		piece_t master;
 
 	public:
-		const piece_t& getMaster() return &master;
+		const piece_t& getMaster() 
+		{
+			return &master;
+		}
 
 		void operator() (const blocked_range<uint64_t> &r)
 		{
@@ -36,7 +39,7 @@ class DragonLimits {
 			}
 		}
 
-		void join(const DragonLimits &lim)
+		void join(DragonLimits &lim)
 		{
 			piece_merge(&lim.master, &master);
 		}
