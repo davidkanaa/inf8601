@@ -33,15 +33,12 @@ class DragonLimits {
 		{
 			uint64_t start = r.begin();
 			uint64_t end   = r.end();
-			for (uint64_t i=start; i!=end; ++i)
-			{
-				piece_limit(start, end, &master);
-			}
+			piece_limit(start, end, &master);
 		}
 
-		void join(DragonLimits &lim)
+		void join(DragonLimits &l)
 		{
-			piece_merge(&lim.master, master);
+			piece_merge(&master, l.master);
 		}
 
 		DragonLimits(DragonLimits &x, split)
@@ -139,7 +136,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
  */
 int dragon_limits_tbb(limits_t *limits, uint64_t size, int nb_thread)
 {
-	TODO("dragon_limits_tbb");
+	//TODO("dragon_limits_tbb");
 	DragonLimits lim;
 
 	/* Create the scheduler with `nb_thread` number of threads */
