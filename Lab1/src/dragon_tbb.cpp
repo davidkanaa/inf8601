@@ -20,6 +20,36 @@ using namespace std;
 using namespace tbb;
 
 class DragonLimits {
+	private:
+		piece_t master;
+
+	public:
+		const piece_t& getMaster() return &master;
+
+		void operator() (const blocked_range<uint64_t> &r)
+		{
+			uint64_t start = r.begin();
+			uint64_t end   = r.end();
+			for (uint64_t i=start; i!=end; ++i)
+			{
+				piece_limit(start, end, &master);
+			}
+		}
+
+		void join(const DragonLimits &lim)
+		{
+			piece_merge(&lim.master, &master);
+		}
+
+		DragonLimits(DragonLimits &x, split)
+		{
+			piece_init(&master);
+		}
+
+		DragonLimits()
+		{
+			piece_init(&master);
+		}
 };
 
 class DragonDraw {
@@ -109,9 +139,18 @@ int dragon_limits_tbb(limits_t *limits, uint64_t size, int nb_thread)
 	TODO("dragon_limits_tbb");
 	DragonLimits lim;
 
+	/* Create the scheduler with `nb_thread` number of threads */
+	task_scheduler_init init(nb_thread);
 
-	piece_t piece;
+	/**/
+	parallel_reduce( blocked_range<uint64_t>(0, size), lim );
+
+
+	/*piece_t piece;
 	piece_init(&piece);
-	*limits = piece.limits;
+	*limits = piece.limits;*/
+
+	*limits = lim.getMaster().limits;
+
 	return 0;
 }
