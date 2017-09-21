@@ -20,50 +20,90 @@ using namespace std;
 using namespace tbb;
 
 class DragonLimits {
-	private:
-		piece_t master;
+private:
+	piece_t master;
 
-	public:
-		const piece_t& getMaster() 
-		{
-			return master;
-		}
+public:
+	const piece_t& getMaster() 
+	{
+		return master;
+	}
 
-		void operator() (const blocked_range<uint64_t> &r)
-		{
-			uint64_t start = r.begin();
-			uint64_t end   = r.end();
-			piece_limit(start, end, &master);
-		}
+	void operator() (const blocked_range<uint64_t> &r)
+	{
+		uint64_t start = r.begin();
+		uint64_t end   = r.end();
+		piece_limit(start, end, &master);
+	}
 
-		void join(DragonLimits &l)
-		{
-			piece_merge(&master, l.master);
-		}
+	void join(DragonLimits &l)
+	{
+		piece_merge(&master, l.master);
+	}
 
-		DragonLimits(DragonLimits &x, split)
-		{
-			piece_init(&master);
-		}
+	DragonLimits(DragonLimits &x, split)
+	{
+		piece_init(&master);
+	}
 
-		DragonLimits()
-		{
-			piece_init(&master);
-		}
+	DragonLimits()
+	{
+		piece_init(&master);
+	}
 };
 
 class DragonDraw {
+private:
+	struct draw_data data; 
+public:
+	void operator() (const blocked_range<uint64_t> &r)
+	{
+		/* Go through the list `data.tid`,
+		   Find the first index at which th valu is 0,
+		   Use that value as thread index */
+		int id = 0;
+		while (data.tid[id] != 0) id++;
+		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>id);
+	}
+
+	DragonDraw(struct draw_data &dat):data(dat) {}
 };
 
 class DragonRender {
+private:
+	struct draw_data data;
+public:
+	void operator() (const blocked_range<int> &r)
+	{
+		/**/
+		scale_dragon(r.begin(), r.end(), data.image, data.image_height, data.image_width, data.dragon, data.dragon_height, daa.dragon_width, data.palette);
+	}
+
+	DragonRender(struct draw_data &dat):data(dat) {}
 };
 
 class DragonClear {
+private:
+	char *canvas;
+
+public:
+
+	void operator() (const blocked_range<int> &r)
+	{
+		init_canvas(r.begin(), r.end(), canvas, -1);
+	}
+
+	DragonClear(DragonClear &x)
+	{
+		canvas = x.canvas;
+	}
+
+	DragonClear(char *canvas):canvas(canvas) {}
 };
 
 int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uint64_t size, int nb_thread)
 {
-	TODO("dragon_draw_tbb");
+	//TODO("dragon_draw_tbb");
 	struct draw_data data;
 	limits_t limits;
 	char *dragon = NULL;
@@ -116,17 +156,20 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	data.tid = (int *) calloc(nb_thread, sizeof(int));
 
 	/* 2. Initialiser la surface : DragonClear */
+	parallel_for( blocked_range<int>(0, dragon_surface), DragonClear(dragon) );
 
 	/* 3. Dessiner le dragon : DragonDraw */
+	parallel_for( blocked_range<uint64_t>(0, size), DragonDraw(data) );
 
 	/* 4. Effectuer le rendu final */
+	parallel_for( blocked_range<int>(0, height), DragonRender(data) );
 	
 	init.terminate();
 
 	free_palette(palette);
 	FREE(data.tid);
-	//*canvas = dragon;
-	*canvas = NULL;
+	*canvas = dragon;
+	//*canvas = NULL;
 	return 0;
 }
 
@@ -142,14 +185,11 @@ int dragon_limits_tbb(limits_t *limits, uint64_t size, int nb_thread)
 	/* Create the scheduler with `nb_thread` number of threads */
 	task_scheduler_init init(nb_thread);
 
-	/**/
+	/* Parallelize using tbb */
 	parallel_reduce( blocked_range<uint64_t>(0, size), lim );
 
 
-	/*piece_t piece;
-	piece_init(&piece);
-	*limits = piece.limits;*/
-
+	/* Rerive limit values */
 	*limits = lim.getMaster().limits;
 
 	return 0;
