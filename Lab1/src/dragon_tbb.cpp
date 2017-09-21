@@ -56,7 +56,7 @@ class DragonDraw {
 private:
 	struct draw_data data; 
 public:
-	void operator() (const blocked_range<uint64_t> &r)
+	void operator() (const blocked_range<uint64_t> &r) const
 	{
 		/* Go through the list `data.tid`,
 		   Find the first index at which th valu is 0,
@@ -73,7 +73,7 @@ class DragonRender {
 private:
 	struct draw_data data;
 public:
-	void operator() (const blocked_range<int> &r)
+	void operator() (const blocked_range<int> &r) const
 	{
 		/**/
 		scale_dragon(r.begin(), r.end(), data.image, data.image_height, data.image_width, data.dragon, data.dragon_height, data.dragon_width, data.palette);
@@ -88,7 +88,7 @@ private:
 
 public:
 
-	void operator() (const blocked_range<int> &r)
+	void operator() (const blocked_range<int> &r) const
 	{
 		init_canvas(r.begin(), r.end(), canvas, -1);
 	}
