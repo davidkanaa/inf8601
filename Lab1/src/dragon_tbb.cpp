@@ -63,7 +63,7 @@ public:
 		   Use that value as thread index */
 		int id = 0;
 		while (data.tid[id] != 0) id++;
-		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>id);
+		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
 	}
 
 	DragonDraw(struct draw_data &dat):data(dat) {}
