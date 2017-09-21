@@ -159,15 +159,15 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	data.tid = (int *) calloc(nb_thread, sizeof(int));
 
 	/* 2. Initialiser la surface : DragonClear */
-	DragonClear clear{*data};
+	DragonClear clear{&data};
 	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
-	DragonDraw draw{*data, &tidMap};
+	DragonDraw draw{&data, &tidMap};
 	parallel_for( blocked_range<uint64_t>(0, size), draw );
 
 	/* 4. Effectuer le rendu final */
-	DragonRender render{*data};
+	DragonRender render{&data};
 	parallel_for( blocked_range<int>(0, height), render );
 	
 	init.terminate();
