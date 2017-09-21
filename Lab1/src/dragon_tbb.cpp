@@ -169,7 +169,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	
 	init.terminate();
 
-	tidMap->dump();
+	tidMap.dump();
 	free_palette(palette);
 	FREE(data.tid);
 	*canvas = dragon;
