@@ -80,7 +80,7 @@ public:
 	void operator() (const blocked_range<int> &r) const
 	{
 		/**/
-		scale_dragon(r.begin(), r.end(), data.image, data.image_height, data.image_width, data.dragon, data.dragon_height, data.dragon_width, data.palette);
+		scale_dragon(r.begin(), r.end(), data.image, data.image_width, data.image_height, data.dragon, data.dragon_width, data.dragon_height, data.palette);
 	}
 
 	DragonRender(struct draw_data &data):data(data) {}
