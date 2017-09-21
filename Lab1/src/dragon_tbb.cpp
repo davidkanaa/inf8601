@@ -54,7 +54,7 @@ public:
 
 class DragonDraw {
 private:
-	struct draw_data data;
+	struct draw_data* data;
 	TidMap *tidMap;
 public:
 	void operator() (const blocked_range<uint64_t> &r) const
@@ -66,44 +66,41 @@ public:
 		// while (data.tid[id] != 0) id++;
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		int id = tidMap->getIdFromTid(gettid());
-		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
+		dragon_draw_raw(r.begin(), r.end(), data->dragon, data->dragon_width, data->dragon_height, data->limits, static_cast<uint64_t>(id));
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
-	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
+	DragonDraw(struct draw_data *data, TidMap* tidMap):data(data), tidMap(tidMap) {}
 
-	DragonDraw(DragonDraw& dragonDraw):data(dragonDraw.data), tidMap(dragonDraw.tidMap) {}
 };
 
 class DragonRender {
 private:
-	struct draw_data data;
+	struct draw_data* data;
 public:
 	void operator() (const blocked_range<int> &r) const
 	{
 		/**/
-		scale_dragon(r.begin(), r.end(), data.image, data.image_height, data.image_width, data.dragon, data.dragon_height, data.dragon_width, data.palette);
+		scale_dragon(r.begin(), r.end(), data->image, data->image_height, data->image_width, data->dragon, data->dragon_height, data->dragon_width, data->palette);
 	}
 
-	DragonRender(struct draw_data &data):data(data) {}
+	DragonRender(struct draw_data *data):data(data) {}
 
-	DragonRender(DragonRender& dragonRender):data(dragonRender.data) {}
 };
 
 class DragonClear {
 private:
-	struct draw_data data;
+	struct draw_data* data;
 
 public:
 
 	void operator() (const blocked_range<int> &r) const
 	{
-		init_canvas(r.begin(), r.end(), data.dragon, -1);
+		init_canvas(r.begin(), r.end(), data->dragon, -1);
 	}
 
-	DragonClear(struct draw_data &data):data(data) {}
+	DragonClear(struct draw_data *data):data(data) {}
 
-	DragonClear(DragonClear& dragonClear):data(dragonClear.data) {}
 };
 
 int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uint64_t size, int nb_thread)
@@ -162,15 +159,15 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	data.tid = (int *) calloc(nb_thread, sizeof(int));
 
 	/* 2. Initialiser la surface : DragonClear */
-	DragonClear clear{data};
+	DragonClear clear{*data};
 	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
-	DragonDraw draw{data, &tidMap};
+	DragonDraw draw{*data, &tidMap};
 	parallel_for( blocked_range<uint64_t>(0, size), draw );
 
 	/* 4. Effectuer le rendu final */
-	DragonRender render{data};
+	DragonRender render{*data};
 	parallel_for( blocked_range<int>(0, height), render );
 	
 	init.terminate();
