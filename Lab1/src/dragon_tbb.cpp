@@ -70,7 +70,7 @@ public:
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
-	DragonDraw(struct draw_data &data, TidMap tidMap):data(data), tidMap(tidMap) {}
+	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
 };
 
 class DragonRender {
