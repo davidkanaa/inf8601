@@ -66,7 +66,7 @@ public:
 		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
 	}
 
-	DragonDraw(struct draw_data &dat):data(dat) {}
+	DragonDraw(struct draw_data &data):data(data) {}
 };
 
 class DragonRender {
@@ -79,7 +79,7 @@ public:
 		scale_dragon(r.begin(), r.end(), data.image, data.image_height, data.image_width, data.dragon, data.dragon_height, data.dragon_width, data.palette);
 	}
 
-	DragonRender(struct draw_data &dat):data(dat) {}
+	DragonRender(struct draw_data &data):data(data) {}
 };
 
 class DragonClear {
@@ -151,13 +151,16 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	data.tid = (int *) calloc(nb_thread, sizeof(int));
 
 	/* 2. Initialiser la surface : DragonClear */
-	parallel_for( blocked_range<int>(0, dragon_surface), DragonClear{dragon} );
+	DragonClear clear{dragon};
+	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
-	parallel_for( blocked_range<uint64_t>(0, size), DragonDraw{data} );
+	DragonDraw draw{data};
+	parallel_for( blocked_range<uint64_t>(0, size), draw );
 
 	/* 4. Effectuer le rendu final */
-	parallel_for( blocked_range<int>(0, height), DragonRender{data} );
+	DragonRender render{data};
+	parallel_for( blocked_range<int>(0, height), render );
 	
 	init.terminate();
 
