@@ -93,11 +93,6 @@ public:
 		init_canvas(r.begin(), r.end(), canvas, -1);
 	}
 
-	DragonClear(DragonClear &x)
-	{
-		canvas = x.canvas;
-	}
-
 	DragonClear(char *canvas):canvas(canvas) {}
 };
 
