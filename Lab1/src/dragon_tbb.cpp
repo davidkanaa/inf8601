@@ -71,6 +71,8 @@ public:
 	}
 
 	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
+
+	DragonDraw(DragonDraw& dragonDraw):data(dragonDraw.data), tidMap(dragonDraw.tidMap) {}
 };
 
 class DragonRender {
@@ -84,6 +86,8 @@ public:
 	}
 
 	DragonRender(struct draw_data &data):data(data) {}
+
+	DragonRender(DragonRender& dragonRender):data(dragonRender.data) {}
 };
 
 class DragonClear {
@@ -98,6 +102,8 @@ public:
 	}
 
 	DragonClear(struct draw_data &data):data(data) {}
+
+	DragonClear(DragonClear& dragonClear):data(dragonClear.data) {}
 };
 
 int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uint64_t size, int nb_thread)
