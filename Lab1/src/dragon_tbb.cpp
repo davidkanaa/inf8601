@@ -86,16 +86,16 @@ public:
 
 class DragonClear {
 private:
-	char *canvas;
+	struct draw_data data;
 
 public:
 
 	void operator() (const blocked_range<int> &r) const
 	{
-		init_canvas(r.begin(), r.end(), canvas, -1);
+		init_canvas(r.begin(), r.end(), data.dragon, -1);
 	}
 
-	DragonClear(char *canvas):canvas(canvas) {}
+	DragonClear(struct draw_data &data):data(data) {}
 };
 
 int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uint64_t size, int nb_thread)
@@ -153,7 +153,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	data.tid = (int *) calloc(nb_thread, sizeof(int));
 
 	/* 2. Initialiser la surface : DragonClear */
-	DragonClear clear{dragon};
+	DragonClear clear{data};
 	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
@@ -168,7 +168,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 
 	free_palette(palette);
 	FREE(data.tid);
-	*canvas = dragon;
+	*canvas = data.dragon;
 	//*canvas = NULL;
 	return 0;
 }
