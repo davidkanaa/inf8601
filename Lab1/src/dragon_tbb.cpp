@@ -66,7 +66,7 @@ public:
 		// while (data.tid[id] != 0) id++;
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		int id = tidMap->getIdFromTid(gettid());
-		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, 0);
+		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
@@ -169,6 +169,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	
 	init.terminate();
 
+	tidMap->dump();
 	free_palette(palette);
 	FREE(data.tid);
 	*canvas = dragon;
