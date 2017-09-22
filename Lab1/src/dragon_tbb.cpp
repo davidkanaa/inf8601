@@ -56,7 +56,6 @@ class DragonDraw {
 private:
 	struct draw_data data;
 	TidMap *tidMap;
-	int id;
 public:
 	void operator() (const blocked_range<uint64_t> &r) const
 	{
@@ -66,15 +65,12 @@ public:
 		// int id = 0;
 		// while (data.tid[id] != 0) id++;
 		// data.tid[id] = 1;	// set this thread to BUSY.
-		// int id = tidMap->getIdFromTid(gettid());
+		int id = tidMap->getIdFromTid(gettid());
 		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
-	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) 
-	{
-		id = tidMap->getIdFromTid(gettid());
-	}
+	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
 };
 
 class DragonRender {
