@@ -19,6 +19,9 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
+static uint64_t[] thread_limits;
+static int nb_threads;
+
 class DragonLimits {
 private:
 	piece_t master;
@@ -65,8 +68,14 @@ public:
 		// int id = 0;
 		// while (data.tid[id] != 0) id++;
 		// data.tid[id] = 1;	// set this thread to BUSY.
-		int id = tidMap->getIdFromTid(gettid());
-		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, static_cast<uint64_t>(id));
+		//int id = tidMap->getIdFromTid(gettid());
+		tidMap->getIdFromTid(gettid());
+		int color_id = 0;
+		while(!(r.begin() >= thread_limits[id] && r.end()<thread_limits[id+1])) {
+			color_id++;
+		}
+		
+		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, color_id);
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
@@ -115,6 +124,13 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	int scale;
 	int deltaJ;
 	int deltaI;
+
+	thread_limits = malloc(sizeof(uint64_t) * (nb_thread+1));
+	nb_threads = nb_thread;
+	for(int j=0; j < nb_thread ; ++j) {
+		thread_limits[j] = j*size/nb_thread;
+	}
+	thread_limits[nb_thread] = size;
 
 	struct palette *palette = init_palette(nb_thread);
 	if (palette == NULL)
