@@ -80,7 +80,7 @@ public:
 			if(k==k_begin) 
 			{
 				begin.push_back(r.begin());
-				end.push_back((k+1)*size/nb_thread-1);
+				end.push_back((k+1)*size/nb_thread);
 				colors.push_back(k);
 			} 
 			else if(k==k_end) 
@@ -92,12 +92,12 @@ public:
 			else 
 			{
 				begin.push_back(k*size/nb_thread);
-				end.push_back((k+1)*size/nb_thread-1);
+				end.push_back((k+1)*size/nb_thread);
 				colors.push_back(k);
 			}
 		}
 		
-		for(int i=0;i<begin.size();i++)
+		for(unsigned int i=0;i<begin.size();i++)
 		{
 			dragon_draw_raw(begin.at(i), end.at(i), data.dragon, data.dragon_width, data.dragon_height, data.limits, colors.at(i));
 		}
