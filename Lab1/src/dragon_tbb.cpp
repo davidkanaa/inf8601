@@ -19,9 +19,6 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-static uint64_t* thread_limits;
-static int nb_threads;
-
 class DragonLimits {
 private:
 	piece_t master;
@@ -59,6 +56,8 @@ class DragonDraw {
 private:
 	struct draw_data data;
 	TidMap *tidMap;
+	uint64_t size;
+	int nb_thread;
 public:
 	void operator() (const blocked_range<uint64_t> &r) const
 	{
@@ -70,16 +69,43 @@ public:
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		//int id = tidMap->getIdFromTid(gettid());
 		tidMap->getIdFromTid(gettid());
-		int color_id = 0;
-		while(r.end()>=thread_limits[color_id+1]) {
-			color_id++;
+		int k_begin = r.begin()*nb_thread/size;
+		int k_end = r.end()*nb_thread/size;
+		vector<uint64_t> begin;
+		vector<uint64_t> end;
+		vector<int> colors;
+
+		for(int k = k_begin; k <= k_end ; k++) 
+		{
+			if(k==k_begin) 
+			{
+				begin.push_back(r.begin());
+				end.push_back((k+1)*size/nb_thread-1);
+				colors.push_back(k);
+			} 
+			else if(k==k_end) 
+			{
+				begin.push_back(k*size/nb_thread);
+				end.push_back(r.end());
+				colors.push_back(k);
+			} 
+			else 
+			{
+				begin.push_back(k*size/nb_thread);
+				end.push_back((k+1)*size/nb_thread-1);
+				colors.push_back(k);
+			}
 		}
 		
-		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, color_id);
+		for(int i=0;i<n.size();i++)
+		{
+			dragon_draw_raw(begin.at(i), end.at(i), data.dragon, data.dragon_width, data.dragon_height, data.limits, colors.at(i));
+		}
+		
 		// data.tid[id] = 0;	// set this thread to FREED.
 	}
 
-	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
+	DragonDraw(struct draw_data &data, TidMap* tidMap, uint64_t size, int nb_thread):data(data), tidMap(tidMap), size(size), nb_thread(nb_thread) {}
 };
 
 class DragonRender {
@@ -125,13 +151,6 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	int deltaJ;
 	int deltaI;
 
-	thread_limits = (uint64_t*)malloc(sizeof(uint64_t) * (nb_thread+1));
-	nb_threads = nb_thread;
-	for(int j=0; j < nb_thread ; ++j) {
-		thread_limits[j] = j*size/nb_thread;
-	}
-	thread_limits[nb_thread] = size;
-
 	struct palette *palette = init_palette(nb_thread);
 	if (palette == NULL)
 		return -1;
@@ -176,7 +195,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
-	DragonDraw draw{data, &tidMap};
+	DragonDraw draw{data, &tidMap, size, nb_thread};
 	parallel_for( blocked_range<uint64_t>(0, size), draw );
 
 	/* 4. Effectuer le rendu final */
