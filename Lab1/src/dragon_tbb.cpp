@@ -70,10 +70,11 @@ public:
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		//int id = tidMap->getIdFromTid(gettid());
 		tidMap->getIdFromTid(gettid());
-		int color_id = 0;
-		while(r.end()>=thread_limits[color_id+1]) {
-			color_id++;
-		}
+		int color_id = r.begin()/nb_threads;
+		//while(r.end()>=thread_limits[color_id+1]) {
+			//color_id++;
+		//}
+
 		
 		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, color_id);
 		// data.tid[id] = 0;	// set this thread to FREED.
