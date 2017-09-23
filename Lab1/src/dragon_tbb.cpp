@@ -69,8 +69,8 @@ public:
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		//int id = tidMap->getIdFromTid(gettid());
 		tidMap->getIdFromTid(gettid());
-		int k_begin = r.begin()*nb_thread/size;
-		int k_end = r.end()*nb_thread/size;
+		unsigned int k_begin = r.begin()*nb_thread/size;
+		unsigned int k_end = r.end()*nb_thread/size;
 
 		for(unsigned int k = k_begin; k <= k_end ; k++) 
 		{
