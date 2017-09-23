@@ -97,7 +97,7 @@ public:
 			}
 		}
 		
-		for(int i=0;i<n.size();i++)
+		for(int i=0;i<begin.size();i++)
 		{
 			dragon_draw_raw(begin.at(i), end.at(i), data.dragon, data.dragon_width, data.dragon_height, data.limits, colors.at(i));
 		}
