@@ -19,7 +19,7 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-static uint64_t thread_limits[];
+static uint64_t* thread_limits;
 static int nb_threads;
 
 class DragonLimits {
@@ -71,7 +71,7 @@ public:
 		//int id = tidMap->getIdFromTid(gettid());
 		tidMap->getIdFromTid(gettid());
 		int color_id = 0;
-		while(!(r.begin() >= thread_limits[id] && r.end()<thread_limits[id+1])) {
+		while(!(r.begin() >= thread_limits[color_id] && r.end()<thread_limits[color_id+1])) {
 			color_id++;
 		}
 		
