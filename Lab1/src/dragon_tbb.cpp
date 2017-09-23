@@ -21,7 +21,6 @@ using namespace tbb;
 
 static uint64_t* thread_limits;
 static int nb_threads;
-static uint64_t range_size;
 
 class DragonLimits {
 private:
@@ -71,11 +70,10 @@ public:
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		//int id = tidMap->getIdFromTid(gettid());
 		tidMap->getIdFromTid(gettid());
-		int color_id = r.begin()*range_size/nb_threads;
-		//while(r.end()>=thread_limits[color_id+1]) {
-			//color_id++;
-		//}
-
+		int color_id = 0;
+		while(r.end()>=thread_limits[color_id+1]) {
+			color_id++;
+		}
 		
 		dragon_draw_raw(r.begin(), r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, color_id);
 		// data.tid[id] = 0;	// set this thread to FREED.
@@ -133,7 +131,6 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 		thread_limits[j] = j*size/nb_thread;
 	}
 	thread_limits[nb_thread] = size;
-	range_size = size;
 
 	struct palette *palette = init_palette(nb_thread);
 	if (palette == NULL)
