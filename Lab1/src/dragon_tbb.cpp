@@ -71,35 +71,21 @@ public:
 		tidMap->getIdFromTid(gettid());
 		int k_begin = r.begin()*nb_thread/size;
 		int k_end = r.end()*nb_thread/size;
-		vector<uint64_t> begin;
-		vector<uint64_t> end;
-		vector<int> colors;
 
-		for(int k = k_begin; k <= k_end ; k++) 
+		for(unsigned int k = k_begin; k <= k_end ; k++) 
 		{
 			if(k==k_begin) 
 			{
-				begin.push_back(r.begin());
-				end.push_back((k+1)*size/nb_thread);
-				colors.push_back(k);
+				dragon_draw_raw(r.begin(), (k+1)*size/nb_thread, data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			} 
 			else if(k==k_end) 
 			{
-				begin.push_back(k*size/nb_thread);
-				end.push_back(r.end());
-				colors.push_back(k);
+				dragon_draw_raw(k*size/nb_thread, r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			} 
 			else 
 			{
-				begin.push_back(k*size/nb_thread);
-				end.push_back((k+1)*size/nb_thread);
-				colors.push_back(k);
+				dragon_draw_raw(k*size/nb_thread, (k+1)*size/nb_thread, data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			}
-		}
-		
-		for(unsigned int i=0;i<begin.size();i++)
-		{
-			dragon_draw_raw(begin.at(i), end.at(i), data.dragon, data.dragon_width, data.dragon_height, data.limits, colors.at(i));
 		}
 		
 		// data.tid[id] = 0;	// set this thread to FREED.
