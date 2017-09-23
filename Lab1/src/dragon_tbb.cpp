@@ -125,7 +125,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	int deltaJ;
 	int deltaI;
 
-	thread_limits = malloc(sizeof(uint64_t) * (nb_thread+1));
+	thread_limits = (uint64_t*)malloc(sizeof(uint64_t) * (nb_thread+1));
 	nb_threads = nb_thread;
 	for(int j=0; j < nb_thread ; ++j) {
 		thread_limits[j] = j*size/nb_thread;
