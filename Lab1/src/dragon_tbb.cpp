@@ -19,7 +19,7 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-static uint64_t[] thread_limits;
+static uint64_t thread_limits[];
 static int nb_threads;
 
 class DragonLimits {
