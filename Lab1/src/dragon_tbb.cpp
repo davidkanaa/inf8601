@@ -20,7 +20,7 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-atomic_int nb_intervals = 0;
+atomic<int> nb_intervals = 0;
 
 class DragonLimits {
 private:
