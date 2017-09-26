@@ -68,7 +68,11 @@ public:
 		// while (data.tid[id] != 0) id++;
 		// data.tid[id] = 1;	// set this thread to BUSY.
 		//int id = tidMap->getIdFromTid(gettid());
+		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
+		cout << "Interval start : " << r.begin() << " - end : " << r.end() << endl;
+		// Fin instrumentation pour partie 3
+		
 		unsigned int k_begin = r.begin()*nb_thread/size;
 		unsigned int k_end = r.end()*nb_thread/size;
 
@@ -188,6 +192,10 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	DragonRender render{data};
 	parallel_for( blocked_range<int>(0, height), render );
 	
+	// Instrumentation pour partie 3
+	tidMap.dump();
+	// Fin instrumentation pour partie 3
+
 	init.terminate();
 
 	free_palette(palette);
