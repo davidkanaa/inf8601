@@ -6,7 +6,6 @@
  */
 
 #include <iostream>
-#include <stdatomic.h>
 
 extern "C" {
 #include "dragon.h"
