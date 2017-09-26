@@ -72,7 +72,7 @@ public:
 		//int id = tidMap->getIdFromTid(gettid());
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
-		printf("Interval start : %" PRId64 " - end : %" PRId64 "", r.begin(), r.end()); 
+		printf("Interval start : %" PRId64 " - end : %" PRId64 "\n", r.begin(), r.end()); 
 		nb_intervals++;
 		// Fin instrumentation pour partie 3
 
