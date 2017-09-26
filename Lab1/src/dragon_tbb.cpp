@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <stdatomic.h>
 
 extern "C" {
 #include "dragon.h"
@@ -19,7 +20,7 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-int nb_intervals = 0;
+atomic_int nb_intervals = 0;
 
 class DragonLimits {
 private:
@@ -72,7 +73,7 @@ public:
 		//int id = tidMap->getIdFromTid(gettid());
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
-		cout << "Interval start : " << r.begin() << " - end : " << r.end() << endl;
+		printf("Interval start : %" PRId64 " - end : %" PRId64 "", r.begin(), r.end()); 
 		nb_intervals++;
 		// Fin instrumentation pour partie 3
 
