@@ -19,6 +19,8 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
+int nb_intervals = 0;
+
 class DragonLimits {
 private:
 	piece_t master;
@@ -71,8 +73,9 @@ public:
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
 		cout << "Interval start : " << r.begin() << " - end : " << r.end() << endl;
+		nb_intervals++;
 		// Fin instrumentation pour partie 3
-		
+
 		unsigned int k_begin = r.begin()*nb_thread/size;
 		unsigned int k_end = r.end()*nb_thread/size;
 
@@ -194,6 +197,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	
 	// Instrumentation pour partie 3
 	tidMap.dump();
+	cout << "Compteur intervalles : " << nb_intervals << end;
 	// Fin instrumentation pour partie 3
 
 	init.terminate();
