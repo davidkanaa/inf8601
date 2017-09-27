@@ -34,10 +34,10 @@ void *dragon_draw_worker(void *data)
 	struct draw_data *drawdata = (struct draw_data *) data;
 
 	// Computing the real size (pixels ?) of the surface to be drawn
-	int surface = drawdata->dragon_width*drawdata->dragon_height;
+	uint64_t surface = drawdata->dragon_width*drawdata->dragon_height;
 	// Each thread canvas represent a portion of the full canvas (as seen in serial)
-	int start_canvas = surface * drawdata->id/drawdata->nb_thread;
-	int end_canvas = surface * (drawdata->id+1)/drawdata->nb_thread;
+	int start_canvas = surface * drawdata->id/((uint64_t)drawdata->nb_thread);
+	int end_canvas = surface * (drawdata->id+1)/((uint64_t)drawdata->nb_thread);
 
 	init_canvas(start_canvas, end_canvas, drawdata->dragon,-1);
 
