@@ -49,12 +49,14 @@ void *dragon_draw_worker(void *data)
 	uint64_t start = drawdata->id * drawdata->size / drawdata->nb_thread;
 	uint64_t end = (drawdata->id + 1) * drawdata->size / drawdata->nb_thread;
 
+	#if 0
 	//Instrumentation pour partie 3
 	int thread_tid = gettid();
 	printf("PThread - Thread id : %d \n", thread_tid);
 	printf("Interval start : %" PRId64 " - Inverval end : %" PRId64 " \n", start, end);
 	//Fin instrumentation
-	
+	#endif
+
 	dragon_draw_raw(start, end, drawdata->dragon, drawdata->dragon_width, drawdata->dragon_height, drawdata->limits, drawdata->id);
 
 	// We wait until all threads have painted the raw matrix

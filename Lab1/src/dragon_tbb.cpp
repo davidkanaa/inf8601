@@ -64,11 +64,13 @@ public:
 	void operator() (const blocked_range<uint64_t> &r) const
 	{
 		
+		#if 0
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
 		printf("Interval start : %" PRId64 " - end : %" PRId64 "\n", r.begin(), r.end()); 
 		nb_intervals++;
 		// Fin instrumentation pour partie 3
+		#endif
 
 		//
 		int nb_thread  = data.nb_thread;
