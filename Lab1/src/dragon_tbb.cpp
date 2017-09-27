@@ -63,29 +63,28 @@ private:
 public:
 	void operator() (const blocked_range<uint64_t> &r) const
 	{
-		/* Go through the list `data.tid`,
-		   Find the first index at which the value is 0,
-		   Use that value as thread index */
-		// int id = 0;
-		// while (data.tid[id] != 0) id++;
-		// data.tid[id] = 1;	// set this thread to BUSY.
-		//int id = tidMap->getIdFromTid(gettid());
+		
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
 		printf("Interval start : %" PRId64 " - end : %" PRId64 "\n", r.begin(), r.end()); 
 		nb_intervals++;
 		// Fin instrumentation pour partie 3
 
-		unsigned int k_begin = r.begin()*nb_thread/size;
-		unsigned int k_end = r.end()*nb_thread/size;
+		//
+		int nb_thread  = data.nb_thread;
+		uint64_t size  = data.size;
+		uint64_t index_begin = r.begin() * nb_thread/size;
+		uint64_t index_end 	 = r.end() * nb_thread/size;
 
-		for(unsigned int k = k_begin; k <= k_end ; k++) 
+		// A robust way to deal with parallel drawing
+		/*
+		for(unsigned int k = index_begin; k <= k_end ; k++) 
 		{
-			if(k==k_begin) 
+			if(k==index_begin) 
 			{
 				dragon_draw_raw(r.begin(), (k+1)*size/nb_thread, data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			} 
-			else if(k==k_end) 
+			else if(k==index_end) 
 			{
 				dragon_draw_raw(k*size/nb_thread, r.end(), data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			} 
@@ -94,11 +93,15 @@ public:
 				dragon_draw_raw(k*size/nb_thread, (k+1)*size/nb_thread, data.dragon, data.dragon_width, data.dragon_height, data.limits, k);
 			}
 		}
-		
-		// data.tid[id] = 0;	// set this thread to FREED.
+		*/
+
+		// A simpler but not general way to do the parallel drawing
+		uint64_t start = index_begin * size/nb_thread;
+		uint64_t stop  = index_end * size/nb_thread;
+		dragon_draw_raw(start, stop, data.dragon, data.dragon_width, data.dragon_height, data.limits, index_begin);
 	}
 
-	DragonDraw(struct draw_data &data, TidMap* tidMap, uint64_t size, int nb_thread):data(data), tidMap(tidMap), size(size), nb_thread(nb_thread) {}
+	DragonDraw(struct draw_data &data, TidMap* tidMap):data(data), tidMap(tidMap) {}
 };
 
 class DragonRender {
@@ -188,7 +191,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	parallel_for( blocked_range<int>(0, dragon_surface), clear );
 
 	/* 3. Dessiner le dragon : DragonDraw */
-	DragonDraw draw{data, &tidMap, size, nb_thread};
+	DragonDraw draw{data, &tidMap};
 	parallel_for( blocked_range<uint64_t>(0, size), draw );
 
 	/* 4. Effectuer le rendu final */
