@@ -201,8 +201,8 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	parallel_for( blocked_range<int>(0, height), render );
 	
 	// Instrumentation pour partie 3
-	tidMap.dump();
-	cout << "Compteur intervalles : " << nb_intervals << endl;
+	//tidMap.dump();
+	//cout << "Compteur intervalles : " << nb_intervals << endl;
 	// Fin instrumentation pour partie 3
 
 	init.terminate();
