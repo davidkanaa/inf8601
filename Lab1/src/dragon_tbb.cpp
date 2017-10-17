@@ -19,7 +19,6 @@ extern "C" {
 using namespace std;
 using namespace tbb;
 
-int nb_intervals = 0;
 
 class DragonLimits {
 private:
@@ -67,8 +66,7 @@ public:
 		#if 0
 		// Instrumentation pour partie 3
 		tidMap->getIdFromTid(gettid());
-		printf("Interval start : %" PRId64 " - end : %" PRId64 "\n", r.begin(), r.end()); 
-		nb_intervals++;
+		printf("Thread id: %i --- Interval start : %" PRId64 " - end : %" PRId64 "\n", gettid(), r.begin(), r.end()); 
 		// Fin instrumentation pour partie 3
 		#endif
 
@@ -137,6 +135,7 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 {
 	//TODO("dragon_draw_tbb");
 	TidMap tidMap(nb_thread);
+
 	struct draw_data data;
 	limits_t limits;
 	char *dragon = NULL;
@@ -154,6 +153,8 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 		return -1;
 
 	/* 1. Calculer les limites du dragon */
+	//task_scheduler_init init(nb_thread);
+
 	dragon_limits_tbb(&limits, size, nb_thread);
 
 	task_scheduler_init init(nb_thread);
@@ -199,11 +200,12 @@ int dragon_draw_tbb(char **canvas, struct rgb *image, int width, int height, uin
 	/* 4. Effectuer le rendu final */
 	DragonRender render{data};
 	parallel_for( blocked_range<int>(0, height), render );
-	
+
+	#if 0	
 	// Instrumentation pour partie 3
-	//tidMap.dump();
-	//cout << "Compteur intervalles : " << nb_intervals << endl;
+	tidMap.dump();
 	// Fin instrumentation pour partie 3
+	#endif
 
 	init.terminate();
 
@@ -229,6 +231,8 @@ int dragon_limits_tbb(limits_t *limits, uint64_t size, int nb_thread)
 	/* Parallelize using tbb */
 	parallel_reduce( blocked_range<uint64_t>(0, size), lim );
 
+	/* terminate scheduler */
+	init.terminate();
 
 	/* Rerive limit values */
 	*limits = lim.getMaster().limits;
