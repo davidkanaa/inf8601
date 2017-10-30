@@ -26,8 +26,25 @@ struct cs {
 
 int encode_fast(struct chunk *chunk)
 {
-    // TODO
-    chunk->checksum = 42;
+    int i,j;
+    int key = chunk->key;
+    int height = chunk->height;
+    int width = chunk->width;
+
+    char* data = chunk->data;
+
+    uint64_t checksum = 0;
+
+    #pragma omp parallel for private(i,j) shared(data,key) reduction(+:checksum)
+    for(i = 0; i<height; i++) {
+        char* index = data + i*width;
+        for(j=0; j<width; j++) {
+            *index += key;
+            checksum += *index;
+            index++;
+        }
+    }
+    chunk->checksum = checksums;
     return 0;
 }
 
