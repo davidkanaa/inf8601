@@ -44,7 +44,7 @@ int encode_fast(struct chunk *chunk)
             index++;
         }
     }
-    chunk->checksum = checksums;
+    chunk->checksum = checksum;
     return 0;
 }
 
