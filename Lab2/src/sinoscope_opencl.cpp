@@ -135,6 +135,8 @@ int create_buffer(int width, int height)
      * TODO: initialiser la memoire requise avec clCreateBuffer()
      */
     cl_int ret = 0;
+    output = clCreateBuffer(context, , width*height*size_of(char)*BYTE_PER_PIX, NULL, &ret);
+    ERR_THROW(CL_SUCCESS, ret, "clCreateBuffer failed");
     goto error;
 done:
     return ret;
@@ -183,6 +185,10 @@ void opencl_shutdown()
     /*
      * TODO: liberer les ressources allouees
      */
+
+     if (output) clReleaseMemObject(output);
+     if (prog) clReleaseProgram(prog);
+     if (kernel) clReleaseKernel(kernel);
 }
 
 int sinoscope_image_opencl(sinoscope_t *ptr)
@@ -209,6 +215,33 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
 
     cl_int ret = 0;
     cl_event ev;
+
+    sinoscope_t s = *ptr;
+    
+    ret  = clSetKernelArg(kernel, 0, sizeof(output), &output);
+    ret |= clSetKernelArg(kernel, 1, sizeof(s.height), &s.height);
+    ret |= clSetKernelArg(kernel, 2, sizeof(s.width), &s.width);
+    ret |= clSetKernelArg(kernel, 3, sizeof(s.dx), &c.dx);
+    ret |= clSetKernelArg(kernel, 4, sizeof(s.dy), &c.dy);
+    ret |= clSetKernelArg(kernel, 5, sizeof(s.taylor), &c.taylor);
+    ret |= clSetKernelArg(kernel, 6, sizeof(s.phase0), &c.phase0);
+    ret |= clSetKernelArg(kernel, 7, sizeof(s.phase1), &c.phase1);
+    ret |= clSetKernelArg(kernel, 8, sizeof(s.time), &c.time);
+    ret |= clSetKernelArg(kernel, 9, sizeof(s.interval), &c.interval);
+    ret |= clSetKernelArg(kernel, 10, sizeof(s.interval_inv), &c.interval_inv);
+    ERR_THROW(CL_SUCCESS, ret, "");
+
+    size_t worksize[2];
+    worksize[0] = s.width;
+    worksize[1] = s.height;
+    ret = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, worksize, NULL, 0, NULL, NULL);
+    ERR_THROW(CL_SUCCESS, ret, "clEnqueueNDRangeKernel failed");
+    
+    ret = clFinish(queue);
+    ERR_THROW(CL_SUCCESS, ret, "clFinish failed");
+    
+    ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, s.buf_size, s.buf, 0, NULL, NULL);
+    ERR_THROW(CL_SUCCESS, ret, "clEnqueueReadBuffer failed");
 
     if (ptr == NULL)
         goto error;
