@@ -25,7 +25,7 @@ int sinoscope_image_openmp(sinoscope_t *ptr)
     struct rgb c;
     float val, px, py;
 
-    #pragma omp parallel for private(x, y, index, taylor, val, px, py) shared(sino, c)
+    #pragma omp parallel for private(x, y, index, taylor, val, px, py, c) shared(sino)
     for(x=1; x<sino.width; ++x) {
         for(y=1; y<sino.height; ++y) {
             px = sino.dx * y - 2 * M_PI;
