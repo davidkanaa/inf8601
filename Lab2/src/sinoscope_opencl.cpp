@@ -135,7 +135,7 @@ int create_buffer(int width, int height)
      * TODO: initialiser la memoire requise avec clCreateBuffer()
      */
     cl_int ret = 0;
-    output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*size_of(char)*BYTE_PER_PIX, NULL, &ret);
+    output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(char)*BYTE_PER_PIX, NULL, &ret);
     ERR_THROW(CL_SUCCESS, ret, "clCreateBuffer failed");
     goto error;
 done:
@@ -221,14 +221,14 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     ret  = clSetKernelArg(kernel, 0, sizeof(output), &output);
     ret |= clSetKernelArg(kernel, 1, sizeof(s.height), &s.height);
     ret |= clSetKernelArg(kernel, 2, sizeof(s.width), &s.width);
-    ret |= clSetKernelArg(kernel, 3, sizeof(s.dx), &c.dx);
-    ret |= clSetKernelArg(kernel, 4, sizeof(s.dy), &c.dy);
-    ret |= clSetKernelArg(kernel, 5, sizeof(s.taylor), &c.taylor);
-    ret |= clSetKernelArg(kernel, 6, sizeof(s.phase0), &c.phase0);
-    ret |= clSetKernelArg(kernel, 7, sizeof(s.phase1), &c.phase1);
-    ret |= clSetKernelArg(kernel, 8, sizeof(s.time), &c.time);
-    ret |= clSetKernelArg(kernel, 9, sizeof(s.interval), &c.interval);
-    ret |= clSetKernelArg(kernel, 10, sizeof(s.interval_inv), &c.interval_inv);
+    ret |= clSetKernelArg(kernel, 3, sizeof(s.dx), &s.dx);
+    ret |= clSetKernelArg(kernel, 4, sizeof(s.dy), &s.dy);
+    ret |= clSetKernelArg(kernel, 5, sizeof(s.taylor), &s.taylor);
+    ret |= clSetKernelArg(kernel, 6, sizeof(s.phase0), &s.phase0);
+    ret |= clSetKernelArg(kernel, 7, sizeof(s.phase1), &s.phase1);
+    ret |= clSetKernelArg(kernel, 8, sizeof(s.time), &s.time);
+    ret |= clSetKernelArg(kernel, 9, sizeof(s.interval), &s.interval);
+    ret |= clSetKernelArg(kernel, 10, sizeof(s.interval_inv), &s.interval_inv);
     ERR_THROW(CL_SUCCESS, ret, "");
 
     size_t worksize[2];
