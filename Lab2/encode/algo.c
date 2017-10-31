@@ -35,7 +35,7 @@ int encode_fast(struct chunk *chunk)
 
     uint64_t checksum = 0;
 
-    #pragma omp parallel for private(i,j, index) shared(data, key) reduction(+:checksum)
+    #pragma omp parallel for private(i,j) shared(data, key) reduction(+:checksum)
     for(i = 0; i<height; ++i) {
         char* index = data + i*width;
         for(j=0; j<width; ++j) {
