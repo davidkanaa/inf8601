@@ -135,10 +135,9 @@ int create_buffer(int width, int height)
      * TODO: initialiser la memoire requise avec clCreateBuffer()
      */
     cl_int ret = 0;
-    int BYTE_PER_PIX = 3; 
-    output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(char)*BYTE_PER_PIX, NULL, &ret);
+    output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(unsigned char)*3, NULL, &ret);
     ERR_THROW(CL_SUCCESS, ret, "clCreateBuffer failed");
-    goto error;
+    
 done:
     return ret;
 error:
