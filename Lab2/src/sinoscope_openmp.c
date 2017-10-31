@@ -15,7 +15,6 @@
 
 int sinoscope_image_openmp(sinoscope_t *ptr)
 {
-    TODO("sinoscope_image_openmp");
 
     if (ptr == NULL)
         return -1;
