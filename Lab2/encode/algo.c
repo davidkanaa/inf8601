@@ -39,7 +39,7 @@ int encode_fast(struct chunk *chunk)
     for(i = 0; i<height; i++) {
         int index = i*width;
         for(j=0; j<width; j++) {
-            data[index] += key;
+            data[index] =+ key;
             checksum += data[index];
             index++;
         }
