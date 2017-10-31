@@ -37,7 +37,7 @@ int encode_fast(struct chunk *chunk)
 
     uint64_t checksum = 0;
 
-    #pragma omp parallel for private(i,j, index) reduction(+:checksum)
+    #pragma omp parallel for private(i, index) reduction(+:checksum)
     for(i = 0; i<area; i++) {
         *index += key;
         checksum += *index;
