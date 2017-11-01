@@ -224,8 +224,8 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     ERR_THROW(CL_SUCCESS,ret,"Enqueue write buffer failed");
 
     
-    ret  = clSetKernelArg(kernel, 0, sizeof(output), &output);
-    ret |= clSetKernelArg(kernel, 1, sizeof(input), &input);
+    ret  = clSetKernelArg(kernel, 0, sizeof(input), &input);
+    ret |= clSetKernelArg(kernel, 1, sizeof(output), &output);
     ERR_THROW(CL_SUCCESS, ret, "Failed passing arguments to Kernel");
 
     size_t worksize[2];
