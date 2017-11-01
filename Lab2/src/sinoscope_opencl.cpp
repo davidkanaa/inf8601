@@ -231,7 +231,7 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     size_t worksize[2];
     worksize[0] = s.width;
     worksize[1] = s.height;
-    ret = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, worksize, NULL, 0, NULL, NULL);
+    ret = clEnqueueNDRangeKernel(queue, kernel, 2, 0, worksize, NULL, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS, ret, "clEnqueueNDRangeKernel failed");
     
     ret = clFinish(queue);
