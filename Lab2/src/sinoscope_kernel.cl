@@ -21,7 +21,7 @@ typedef struct sinoscope sinoscope_t;
 
 struct sinoscope {
 	unsigned char *buf;
-        char *name;
+	char *name;
 	int buf_size;
 	int width;
 	int height;
@@ -88,10 +88,9 @@ void value_color(struct rgb *color, float value, int interval, float interval_in
 	*color = c;
 }
 
-__kernel void sinoscope_kernel(__global const sinoscope_t *ptr, __global unsigned char *buf)
+__kernel void sinoscope_kernel(__global const sinoscope_t *sino, __global unsigned char *buf)
 {
 	// TODO
-	sinoscope_t sino = *ptr;
 	const int x = get_global_id(0);
 	const int y = get_global_id(1);
 
@@ -100,16 +99,16 @@ __kernel void sinoscope_kernel(__global const sinoscope_t *ptr, __global unsigne
 	float val, px, py;
 
 
-	px = sino.dx * y - 2 * M_PI;
-	py = sino.dy * x - 2 * M_PI;
+	px = sino->dx * y - 2 * M_PI;
+	py = sino->dy * x - 2 * M_PI;
 	val = 0.0f;
-	for (taylor = 1; taylor <= sino.taylor; taylor += 2) {
-		val += sin(px * taylor * sino.phase1 + sino.time) / taylor + cos(py * taylor * sino.phase0) / taylor;
+	for (taylor = 1; taylor <= sino->taylor; taylor += 2) {
+		val += sin(px * taylor * sino->phase1 + sino->time) / taylor + cos(py * taylor * sino->phase0) / taylor;
 	}
 	val = (atan(1.0 * val) - atan(-1.0 * val)) / (M_PI);
 	val = (val + 1) * 100;
-	value_color(&c, val, sino.interval, sino.interval_inv);
-	index = (y * 3) + (x * 3) * sino.width;
+	value_color(&c, val, sino->interval, sino->interval_inv);
+	index = (y * 3) + (x * 3) * sino->width;
 	buf[index + 0] = c.r;
 	buf[index + 1] = c.g;
 	buf[index + 2] = c.b;
