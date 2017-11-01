@@ -189,6 +189,7 @@ void opencl_shutdown()
      */
 
      if (output) clReleaseMemObject(output);
+     if (input) clReleaseMemObject(input);
      if (prog) clReleaseProgram(prog);
      if (kernel) clReleaseKernel(kernel);
 }
