@@ -31,6 +31,7 @@ static cl_program prog = NULL;
 static cl_kernel kernel = NULL;
 
 static cl_mem output = NULL;
+static cl_mem input  = NULL;
 
 int get_opencl_queue()
 {
@@ -135,6 +136,7 @@ int create_buffer(int width, int height)
      * TODO: initialiser la memoire requise avec clCreateBuffer()
      */
     cl_int ret = 0;
+    input = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(sinoscope_t), NULL, &ret);
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(unsigned char)*3, NULL, &ret);
     ERR_THROW(CL_SUCCESS, ret, "clCreateBuffer failed");
     
@@ -217,19 +219,14 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     cl_event ev;
 
     sinoscope_t s = *ptr;
+
+    ret = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, sizeof(sinoscope_t), ptr, 0, NULL, NULL);
+    ERR_THROW(CL_SUCCESS,ret,"Enqueue write buffer failed");
+
     
     ret  = clSetKernelArg(kernel, 0, sizeof(output), &output);
-    ret |= clSetKernelArg(kernel, 1, sizeof(s.height), &s.height);
-    ret |= clSetKernelArg(kernel, 2, sizeof(s.width), &s.width);
-    ret |= clSetKernelArg(kernel, 3, sizeof(s.dx), &s.dx);
-    ret |= clSetKernelArg(kernel, 4, sizeof(s.dy), &s.dy);
-    ret |= clSetKernelArg(kernel, 5, sizeof(s.taylor), &s.taylor);
-    ret |= clSetKernelArg(kernel, 6, sizeof(s.phase0), &s.phase0);
-    ret |= clSetKernelArg(kernel, 7, sizeof(s.phase1), &s.phase1);
-    ret |= clSetKernelArg(kernel, 8, sizeof(s.time), &s.time);
-    ret |= clSetKernelArg(kernel, 9, sizeof(s.interval), &s.interval);
-    ret |= clSetKernelArg(kernel, 10, sizeof(s.interval_inv), &s.interval_inv);
-    ERR_THROW(CL_SUCCESS, ret, "");
+    ret |= clSetKernelArg(kernel, 1, sizeof(input), &input);
+    ERR_THROW(CL_SUCCESS, ret, "Failed passing arguments to Kernel");
 
     size_t worksize[2];
     worksize[0] = s.width;
