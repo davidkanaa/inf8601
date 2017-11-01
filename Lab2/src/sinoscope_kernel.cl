@@ -21,6 +21,8 @@ typedef struct sinoscope sinoscope_t;
 
 struct sinoscope {
 	unsigned char *buf;
+        char *name;
+	int buf_size;
 	int width;
 	int height;
 	int interval;
@@ -86,7 +88,7 @@ void value_color(struct rgb *color, float value, int interval, float interval_in
 	*color = c;
 }
 
-__kernel void sinoscope_kernel(__global sinoscope_t *ptr, __global unsigned char *buf)
+__kernel void sinoscope_kernel(__global const sinoscope_t *ptr, __global unsigned char *buf)
 {
 	// TODO
 	sinoscope_t sino = *ptr;
@@ -108,7 +110,7 @@ __kernel void sinoscope_kernel(__global sinoscope_t *ptr, __global unsigned char
 	val = (val + 1) * 100;
 	value_color(&c, val, sino.interval, sino.interval_inv);
 	index = (y * 3) + (x * 3) * sino.width;
-	sino.buf[index + 0] = c.r;
-	sino.buf[index + 1] = c.g;
-	sino.buf[index + 2] = c.b;
+	buf[index + 0] = c.r;
+	buf[index + 1] = c.g;
+	buf[index + 2] = c.b;
 }
