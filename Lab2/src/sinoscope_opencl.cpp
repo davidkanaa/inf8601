@@ -137,8 +137,9 @@ int create_buffer(int width, int height)
      */
     cl_int ret = 0;
     input = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(sinoscope_t), NULL, &ret);
+    ERR_THROW(CL_SUCCESS, ret, "Creation of input buffer failed");
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(unsigned char)*3, NULL, &ret);
-    ERR_THROW(CL_SUCCESS, ret, "clCreateBuffer failed");
+    ERR_THROW(CL_SUCCESS, ret, "Creation of output buffer failed");
     
 done:
     return ret;
@@ -164,13 +165,13 @@ int opencl_init(int width, int height)
      * Initialisation du programme
      */
     prog = clCreateProgramWithSource(context, 1, (const char **) &code, &length, &err);
-    ERR_THROW(CL_SUCCESS, err, "clCreateProgramWithSource failed");
+    ERR_THROW(CL_SUCCESS, err, "Creation of programme with source failed");
     err = clBuildProgram(prog, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
-    ERR_THROW(CL_SUCCESS, err, "clBuildProgram failed");
+    ERR_THROW(CL_SUCCESS, err, "Build of programme failed");
     kernel = clCreateKernel(prog, "sinoscope_kernel", &err);
-    ERR_THROW(CL_SUCCESS, err, "clCreateKernel failed");
+    ERR_THROW(CL_SUCCESS, err, "Creation of kernel failed");
     err = create_buffer(width, height);
-    ERR_THROW(CL_SUCCESS, err, "create_buffer failed");
+    ERR_THROW(CL_SUCCESS, err, "Creation of buffer(s) failed");
 
     free(code);
     return 0;
@@ -222,24 +223,24 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     sinoscope_t s = *ptr;
 
     ret = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, sizeof(sinoscope_t), ptr, 0, NULL, NULL);
-    ERR_THROW(CL_SUCCESS,ret,"Enqueue write buffer failed");
+    ERR_THROW(CL_SUCCESS,ret,"Enqueueing write input (buffer) to GPU operation failed");
 
     
     ret  = clSetKernelArg(kernel, 0, sizeof(input), &input);
     ret |= clSetKernelArg(kernel, 1, sizeof(output), &output);
-    ERR_THROW(CL_SUCCESS, ret, "Failed passing arguments to Kernel");
+    ERR_THROW(CL_SUCCESS, ret, "Passing arguments to kernel failed");
 
     size_t worksize[2];
     worksize[0] = s.width;
     worksize[1] = s.height;
     ret = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, worksize, NULL, 0, NULL, NULL);
-    ERR_THROW(CL_SUCCESS, ret, "clEnqueueNDRangeKernel failed");
+    ERR_THROW(CL_SUCCESS, ret, "Enqueueing of NDRange failed");
     
     ret = clFinish(queue);
-    ERR_THROW(CL_SUCCESS, ret, "clFinish failed");
+    ERR_THROW(CL_SUCCESS, ret, "Finish failed");
     
     ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, s.buf_size, s.buf, 0, NULL, NULL);
-    ERR_THROW(CL_SUCCESS, ret, "clEnqueueReadBuffer failed");
+    ERR_THROW(CL_SUCCESS, ret, "Enqueueing read output (buffer) from GPU operation failed");
 
     if (ptr == NULL)
         goto error;
