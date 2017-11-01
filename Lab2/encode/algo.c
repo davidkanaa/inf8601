@@ -33,15 +33,13 @@ int encode_fast(struct chunk *chunk)
     int area = height*width;
 
     char* data = chunk->data;
-    char* index = data;
 
     uint64_t checksum = 0;
 
     #pragma omp parallel for private(i, index) reduction(+:checksum)
     for(i = 0; i<area; i++) {
-        *index += key;
-        checksum += *index;
-        index++;
+        data[i] = data[i] + key;
+        checksum += data[i];
     }
     chunk->checksum = checksum;
     return 0;
