@@ -188,10 +188,10 @@ void opencl_shutdown()
      * TODO: liberer les ressources allouees
      */
 
-     if (output) clReleaseMemObject(output);
-     if (input) clReleaseMemObject(input);
      if (prog) clReleaseProgram(prog);
      if (kernel) clReleaseKernel(kernel);
+     if (output) clReleaseMemObject(output);
+     if (input) clReleaseMemObject(input);
 }
 
 int sinoscope_image_opencl(sinoscope_t *ptr)
