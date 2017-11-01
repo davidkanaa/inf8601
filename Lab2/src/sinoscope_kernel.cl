@@ -90,8 +90,8 @@ __kernel void sinoscope_kernel(__global sinoscope_t *sino, __global unsigned cha
 {
 	// TODO
 
-	size_t x = get_global_id(0);
-	size_t y = get_global_id(1);
+	const int x = get_global_id(0);
+	const int y = get_global_id(1);
 
 	struct rgb c;
 	int index, taylor;
