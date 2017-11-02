@@ -31,7 +31,6 @@ static cl_program prog = NULL;
 static cl_kernel kernel = NULL;
 
 static cl_mem output = NULL;
-static cl_mem input  = NULL;
 
 int get_opencl_queue()
 {
@@ -136,8 +135,6 @@ int create_buffer(int width, int height)
      * TODO: initialiser la memoire requise avec clCreateBuffer()
      */
     cl_int ret = 0;
-    input = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(sinoscope_t), NULL, &ret);
-    ERR_THROW(CL_SUCCESS, ret, "Creation of input buffer failed");
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width*height*sizeof(unsigned char)*3, NULL, &ret);
     ERR_THROW(CL_SUCCESS, ret, "Creation of output buffer failed");
     
@@ -192,7 +189,6 @@ void opencl_shutdown()
      if (prog) clReleaseProgram(prog);
      if (kernel) clReleaseKernel(kernel);
      if (output) clReleaseMemObject(output);
-     if (input) clReleaseMemObject(input);
 }
 
 int sinoscope_image_opencl(sinoscope_t *ptr)
@@ -219,13 +215,26 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
 
     cl_int ret = 0;
 
-    ret = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, sizeof(sinoscope_t), ptr, 0, NULL, NULL);
-    ERR_THROW(CL_SUCCESS,ret,"Enqueueing write input (buffer) to GPU operation failed");
-
-    
-    ret  = clSetKernelArg(kernel, 0, sizeof(input), &input);
-    ret |= clSetKernelArg(kernel, 1, sizeof(output), &output);
-    ERR_THROW(CL_SUCCESS, ret, "Passing arguments to kernel failed");
+    ret = clSetKernelArg(kernel, 0, sizeof(output), &output);
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 0 to kernel failed");
+    ret = clSetKernelArg(kernel, 1, sizeof(int), &(ptr->width));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 1 to kernel failed");
+    ret = clSetKernelArg(kernel, 2, sizeof(int), &(ptr->interval));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 2 to kernel failed");
+    ret = clSetKernelArg(kernel, 3, sizeof(int), &(ptr->taylor));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 3 to kernel failed");
+    ret = clSetKernelArg(kernel, 4, sizeof(float), &(ptr->interval_inv));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 4 to kernel failed");
+    ret = clSetKernelArg(kernel, 5, sizeof(float), &(ptr->time));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 5 to kernel failed");
+    ret = clSetKernelArg(kernel, 6, sizeof(float), &(ptr->phase0));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 6 to kernel failed");
+    ret = clSetKernelArg(kernel, 7, sizeof(float), &(ptr->phase1));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 7 to kernel failed");
+    ret = clSetKernelArg(kernel, 8, sizeof(float), &(ptr->dx));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 8 to kernel failed");
+    ret = clSetKernelArg(kernel, 9, sizeof(float), &(ptr->dy));
+    ERR_THROW(CL_SUCCESS, ret, "Passing argument 9 to kernel failed");
 
     size_t worksize[2];
     worksize[0] = ptr->width;
