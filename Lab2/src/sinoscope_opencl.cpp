@@ -234,7 +234,7 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     ret = clFinish(queue);
     ERR_THROW(CL_SUCCESS, ret, "Finish failed");
     
-    ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, ptr->buf_size, ptr>buf, 0, NULL, NULL);
+    ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, ptr->buf_size, ptr->buf, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS, ret, "Enqueueing read output (buffer) from GPU operation failed");
 
     if (ptr == NULL)
