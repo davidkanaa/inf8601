@@ -217,22 +217,31 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
 
     ret = clSetKernelArg(kernel, 0, sizeof(output), &output);
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 0 to kernel failed");
+
     ret = clSetKernelArg(kernel, 1, sizeof(int), &(ptr->width));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 1 to kernel failed");
+
     ret = clSetKernelArg(kernel, 2, sizeof(int), &(ptr->interval));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 2 to kernel failed");
+
     ret = clSetKernelArg(kernel, 3, sizeof(int), &(ptr->taylor));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 3 to kernel failed");
+
     ret = clSetKernelArg(kernel, 4, sizeof(float), &(ptr->interval_inv));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 4 to kernel failed");
+
     ret = clSetKernelArg(kernel, 5, sizeof(float), &(ptr->time));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 5 to kernel failed");
+
     ret = clSetKernelArg(kernel, 6, sizeof(float), &(ptr->phase0));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 6 to kernel failed");
+
     ret = clSetKernelArg(kernel, 7, sizeof(float), &(ptr->phase1));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 7 to kernel failed");
+
     ret = clSetKernelArg(kernel, 8, sizeof(float), &(ptr->dx));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 8 to kernel failed");
+    
     ret = clSetKernelArg(kernel, 9, sizeof(float), &(ptr->dy));
     ERR_THROW(CL_SUCCESS, ret, "Passing argument 9 to kernel failed");
 
