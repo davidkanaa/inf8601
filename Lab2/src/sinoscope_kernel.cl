@@ -90,7 +90,7 @@ void value_color(struct rgb *color, float value, int interval, float interval_in
 
 __kernel void sinoscope_kernel(__global const sinoscope_t *sino, __global unsigned char *buf)
 {
-	// TODO
+
 	const int x = get_global_id(0);
 	const int y = get_global_id(1);
 
