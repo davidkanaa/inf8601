@@ -28,8 +28,6 @@ int encode_fast(struct chunk *chunk)
 {
     int i;
     int key = chunk->key;
-    int height = chunk->height;
-    int width = chunk->width;
     int area = chunk->area;
 
     char* data = chunk->data;
