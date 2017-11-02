@@ -227,7 +227,9 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     ret |= clSetKernelArg(kernel, 1, sizeof(output), &output);
     ERR_THROW(CL_SUCCESS, ret, "Passing arguments to kernel failed");
 
-    size_t worksize[2] = {ptr->width, ptr->height};
+    size_t worksize[2];
+    worksize[0] = ptr->width;
+    worksize[1] = ptr->height;
     ret = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, worksize, NULL, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS, ret, "Enqueueing of NDRange failed");
     
