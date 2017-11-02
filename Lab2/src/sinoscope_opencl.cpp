@@ -218,9 +218,6 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
      */
 
     cl_int ret = 0;
-    cl_event ev;
-
-    sinoscope_t s = *ptr;
 
     ret = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, sizeof(sinoscope_t), ptr, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS,ret,"Enqueueing write input (buffer) to GPU operation failed");
@@ -230,16 +227,14 @@ int sinoscope_image_opencl(sinoscope_t *ptr)
     ret |= clSetKernelArg(kernel, 1, sizeof(output), &output);
     ERR_THROW(CL_SUCCESS, ret, "Passing arguments to kernel failed");
 
-    size_t worksize[2];
-    worksize[0] = s.width;
-    worksize[1] = s.height;
+    size_t worksize[2] = {ptr->width, ptr->height};
     ret = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, worksize, NULL, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS, ret, "Enqueueing of NDRange failed");
     
     ret = clFinish(queue);
     ERR_THROW(CL_SUCCESS, ret, "Finish failed");
     
-    ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, s.buf_size, s.buf, 0, NULL, NULL);
+    ret = clEnqueueReadBuffer(queue, output, CL_TRUE, 0, ptr->buf_size, ptr>buf, 0, NULL, NULL);
     ERR_THROW(CL_SUCCESS, ret, "Enqueueing read output (buffer) from GPU operation failed");
 
     if (ptr == NULL)
