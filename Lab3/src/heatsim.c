@@ -250,8 +250,8 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		*/
 		
 		int n_sends = 4 * (ctx->numprocs -1);
-		MPI_Request req = calloc(n_sends*sizeof(MPI_Request));
-		MPI_Status status = calloc(n_sends*sizeof(MPI_Status));
+		MPI_Request req = calloc(n_sends, sizeof(MPI_Request));
+		MPI_Status status = calloc(n_sends, sizeof(MPI_Status));
 		
 		for (int rank=1; rank<ctx->numprocs; ++rank)
 		{
