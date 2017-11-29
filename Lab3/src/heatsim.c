@@ -215,40 +215,87 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 	grid_t *new_grid = NULL;
 
 	/* FIXME: create 2D cartesian communicator */
+	MPI_Cart_create(MPI_COMM_WORLD, DIM_2D, ctx->dims, ctx->isperiodic, ctx->reorder, &ctx->comm2d);
+	
+	MPI_Cart_shift(ctx->comm2d, 1, 1, &ctx->north_peer, &ctx->south_peer);
+	MPI_Cart_shift(ctx->comm2d, 0, 1, &ctx->west_peer, &ctx->east_peer);
+	
+	MPI_Cart_coords(ctx->comm2d, ctx->rank, DIM_2D, ctx->coords);
 
 	/*
 	 * FIXME: le processus rank=0 charge l'image du disque
 	 * et transfert chaque section aux autres processus
 	 */
+	if( ctx->rank == 0 )
+	{
+		/* load input image */
+		image_t *image = load_png(opts->input);
+		if (image == NULL)
+			goto err;
 
-	/* load input image */
-	image_t *image = load_png(opts->input);
-	if (image == NULL)
-		goto err;
+		/* select the red channel as the heat source */
+		ctx->global_grid = grid_from_image(image, CHAN_RED);
 
-	/* select the red channel as the heat source */
-	ctx->global_grid = grid_from_image(image, CHAN_RED);
+		/* grid is normalized to one, multiply by MAX_TEMP */
+		grid_multiply(ctx->global_grid, MAX_TEMP);
 
-	/* grid is normalized to one, multiply by MAX_TEMP */
-	grid_multiply(ctx->global_grid, MAX_TEMP);
+		/* 2D decomposition */
+		ctx->cart = make_cart2d(ctx->global_grid->width,
+				ctx->global_grid->height, opts->dimx, opts->dimy);
+		cart2d_grid_split(ctx->cart, ctx->global_grid);
 
-	/* 2D decomposition */
-	ctx->cart = make_cart2d(ctx->global_grid->width,
-			ctx->global_grid->height, opts->dimx, opts->dimy);
-	cart2d_grid_split(ctx->cart, ctx->global_grid);
+		/*
+		* FIXME: send grid dimensions and data
+		* Comment traiter le cas de rank=0 ?
+		*/
+		const n_procs = ctx->numprocs -1;  // number of processess but that of rank 0 (current)
+		MPI_Request req[4 * n_procs];
+		MPI_Status status[4 n_procs];
+		for (int rank=1; rank<ctx->numprocs; ++rank)
+		{
+			//
+			int coordinates[DIM_2D];
+			MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
+			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1])
 
-	/*
-	 * FIXME: send grid dimensions and data
-	 * Comment traiter le cas de rank=0 ?
-	 */
+			// send grid dimensions
+			int shift = rank -1;
+			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d, &req[shift+0]);
+			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d, &req[shift+1]);
+			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d, &req[shift+2]);
 
-	/*
-	 * FIXME: receive dimensions of the grid
-	 * store into new_grid
-	 */
+			// send grid data
+			MPI_Send(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, 3, ctx->comm2d, &req[shift+3]);
+		}
+		free(req);
+		free(status);
+
+		/*
+		* FIXME: receive dimensions of the grid
+		* store into new_grid
+		*/
+		int coordinates[DIM_2D];
+		MPI_Cart_coords(ctx->comm2d, 0, DIM_2D, coordinates);
+		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+
+	}else{
+
+		MPI_Request req[4];
+		MPI_Status status[4];
+
+		int width, height, padding;
+		MPI_Recv(&width, 1, MPI_INTEGER, rank, 0, ctx->comm2d, &req[0]);
+		MPI_Recv(&height, 1, MPI_INTEGER, rank, 1, ctx->comm2d, &req[1]);
+		MPI_Recv(&padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d, &req[2]);
+
+		//
+		new_grid = make_grid(width, height, padding);
+		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, rank, 3, ctx->comm2d, &req[3]);
+
+	}
 
 	/* Utilisation temporaire de global_grid */
-	new_grid = ctx->global_grid;
+	//new_grid = ctx->global_grid;
 
 	if (new_grid == NULL)
 		goto err;
@@ -256,9 +303,11 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 	ctx->curr_grid = grid_padding(new_grid, 1);
 	ctx->next_grid = grid_padding(new_grid, 1);
 	ctx->heat_grid = grid_padding(new_grid, 1);
-	//free_grid(new_grid);
+	free_grid(new_grid);
 
 	/* FIXME: create type vector to exchange columns */
+	MPI_Type_vector(ctx->curr_grid->ph, ctx->curr_grid->pw, ctx->curr_grid->padding, MPI_DOUBLE, ctx->vector);
+	MPI_Type_commit(ctx->vector);
 
 	return 0;
 	err: return -1;
@@ -279,15 +328,41 @@ void exchng2d(ctx_t *ctx) {
 	 * 4 echanges doivent etre effectues
 	 */
 	TODO("lab3");
-	/*
-	 grid_t *grid = ctx->next_grid;
-	 int width = grid->pw;
-	 int height = grid->ph;
-	 int *data = grid->data;
-	 MPI_Comm comm = ctx->comm2d;
-	 MPI_Request req[8];
-	 MPI_Status status[8];
-	 */
+	
+	grid_t *grid = ctx->next_grid;
+	int width = grid->pw;
+	int height = grid->ph;
+	int *data = grid->dbl;
+	MPI_Comm comm = ctx->comm2d;
+
+	//
+	MPI_Request req[8];
+	MPI_Status status[8];
+
+	// receive mpi message
+	int *offset_recv_north = data;
+	int *offset_recv_south = data + (height -1) * width;
+	int *offset_recv_east = data + (width -1);
+	int *offset_recv_west = data + 1;
+	
+	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm1d, &req[0]);
+	MPI_Irecv(offset_recv_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm1d, &req[1]);
+	MPI_Irecv(offset_recv_east, 1, ctx->vector, ctx->east_peer, 2, comm1d, &req[2]);
+	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm1d, &req[3]);
+
+	//
+	int *offset_send_north = data;
+	int *offset_send_south = data + (height -1) * width;
+	int *offset_send_east = data + (width -1);
+	int *offset_send_west = data + 1;
+	
+	MPI_Irecv(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm1d, &req[4]);
+	MPI_Irecv(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm1d, &req[5]);
+	MPI_Irecv(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm1d, &req[6]);
+	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm1d, &req[7]);
+
+	MPI_Waitall(8, req, status);
+	
 }
 
 int gather_result(ctx_t *ctx, opts_t *opts) {
