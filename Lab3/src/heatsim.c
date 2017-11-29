@@ -350,7 +350,7 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Irecv(offset_recv_east, 1, ctx->vector, ctx->east_peer, 2, comm1d, &req[2]);
 	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm1d, &req[3]);
 
-	//
+	// send mpi message
 	int *offset_send_north = data;
 	int *offset_send_south = data + (height -1) * width;
 	int *offset_send_east = data + (width -1);
