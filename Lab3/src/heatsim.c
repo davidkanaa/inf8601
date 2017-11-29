@@ -327,7 +327,6 @@ void exchng2d(ctx_t *ctx) {
 	 *  FIXME: Echanger les bordures avec les voisins
 	 * 4 echanges doivent etre effectues
 	 */
-	TODO("lab3");
 	
 	grid_t *grid = ctx->next_grid;
 	int width = grid->pw;
@@ -366,22 +365,43 @@ void exchng2d(ctx_t *ctx) {
 }
 
 int gather_result(ctx_t *ctx, opts_t *opts) {
-	TODO("lab3");
-
+	
 	int ret = 0;
 	grid_t *local_grid = grid_padding(ctx->next_grid, 0);
 	if (local_grid == NULL)
 		goto err;
 
+	MPI_Comm comm = ctx->comm2d;
+	
 	/*
 	 * FIXME: transfer simulation results from all process to rank=0
 	 * use grid for this purpose
 	 */
+	if(ctx->rank != 0) {
+		int size_grid = local_grid->height*local_grid->width;
+		MPI_Send(local_grid->dbl, size_grid, MPI_DOUBLE, 0, 0, comm);
+	} else {
+		int rank_process;
+        for(rank_process = 0; rank_process < ctx->numprocs; ++rank_process) {
+			int coords_process[DIM_2D];
+            MPI_Cart_coords(comm, rank_process, DIM_2D, coords_process);
+
+			grid_t *tmp_grid = cart2d_get_grid(ctx->cart, coords_process[0], coords_process[1]);
+            if(rank_process != 0) 
+            {
+                int size_grid = local_grid->height*local_grid->width;
+                MPI_Recv(buf->dbl, grid_size, MPI_DOUBLE, rank_process, 0, comm, MPI_STATUS_IGNORE);
+            }
+            else
+            {
+                grid_copy(local_grid, tmp_grid);
+            }
+		}
+	} 
 
 	/* now we can merge all data blocks, reuse global_grid */
-	//cart2d_grid_merge(ctx->cart, ctx->global_grid);
-	/* temporairement copie de next_grid */
-	grid_copy(ctx->next_grid, ctx->global_grid);
+	if (ctx->rank == 0)
+        cart2d_grid_merge(ctx->cart, ctx->global_grid);
 
 	done: free_grid(local_grid);
 	return ret;
