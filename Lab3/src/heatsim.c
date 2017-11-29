@@ -248,6 +248,11 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		* FIXME: send grid dimensions and data
 		* Comment traiter le cas de rank=0 ?
 		*/
+		
+		const n_sends = 4 * (ctx->numprocs -1);
+		MPI_Request req[n_sends];
+		MPI_Status status[n_sends];
+		
 		for (int rank=1; rank<ctx->numprocs; ++rank)
 		{
 			//
@@ -255,13 +260,15 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
 			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
+			int shift = rank -1;
+
 			// send grid dimensions
-			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d);
-			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d);
-			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d);
+			MPI_ISend(&buf->width, 1, MPI_INTEGER, rank, shift+0, ctx->comm2d, &req[shift+0]);
+			MPI_ISend(&buf->height, 1, MPI_INTEGER, rank, shift+1, ctx->comm2d, &req[shift+1]);
+			MPI_ISend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, &req[shift+2]);
 
 			// send grid data
-			MPI_Send(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, 3, ctx->comm2d);
+			MPI_ISend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, &req[shift+3]);
 		}
 
 		/*
@@ -272,13 +279,17 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Cart_coords(ctx->comm2d, 0, DIM_2D, coordinates);
 		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
+		MPI_Waitall(n_sends, req, status);
+	   	free(req);
+	    free(status);
+
 	}else{
 		MPI_Status status[4];
 
 		int width, height, padding;
-		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, 0, ctx->comm2d, &status[0]);
-		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, 1, ctx->comm2d, &status[1]);
-		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, 2, ctx->comm2d, &status[2]);
+		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &status[0]);
+		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &status[1]);
+		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &status[2]);
 
 		//
 		new_grid = make_grid(width, height, padding);
@@ -375,13 +386,12 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 		int size_grid = local_grid->height*local_grid->width;
 		MPI_Send(local_grid->dbl, size_grid, MPI_DOUBLE, 0, 0, comm);
 	} else {
-		int rank_process;
-        for(rank_process = 0; rank_process < ctx->numprocs; ++rank_process) {
-			int coords_process[DIM_2D];
-            MPI_Cart_coords(comm, rank_process, DIM_2D, coords_process);
+        for(int rank = 1; rank < ctx->numprocs; ++rank) {
+			int coordinates[DIM_2D];
+            MPI_Cart_coords(comm, rank_process, DIM_2D, coordinates);
 
-			grid_t *tmp_grid = cart2d_get_grid(ctx->cart, coords_process[0], coords_process[1]);
-            if(rank_process != 0) 
+			grid_t *tmp_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+            if(rank != 0) 
             {
                 int size_grid = local_grid->height*local_grid->width;
                 MPI_Recv(tmp_grid->dbl, size_grid, MPI_DOUBLE, rank_process, 0, comm, MPI_STATUS_IGNORE);
