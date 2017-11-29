@@ -299,9 +299,6 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, 0, tag+3, ctx->comm2d, &req[3]);
 
 		MPI_Waitall(4, req, status);
-	   	free(req);
-		free(status);
-
 	}
 
 	/* Utilisation temporaire de global_grid */
@@ -371,8 +368,6 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
 
 	MPI_Waitall(8, req, status);
-	free(req);
-	free(status);
 	
 }
 
