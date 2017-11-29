@@ -248,7 +248,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		* FIXME: send grid dimensions and data
 		* Comment traiter le cas de rank=0 ?
 		*/
-		const n_procs = ctx->numprocs -1;  // number of processess but that of rank 0 (current)
+		const int n_procs = ctx->numprocs -1;  // number of processess but that of rank 0 (current)
 		MPI_Request req[4 * n_procs];
 		MPI_Status status[4 * n_procs];
 		for (int rank=1; rank<ctx->numprocs; ++rank)
