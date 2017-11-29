@@ -250,16 +250,16 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		*/
 		const n_procs = ctx->numprocs -1;  // number of processess but that of rank 0 (current)
 		MPI_Request req[4 * n_procs];
-		MPI_Status status[4 n_procs];
+		MPI_Status status[4 * n_procs];
 		for (int rank=1; rank<ctx->numprocs; ++rank)
 		{
 			//
 			int coordinates[DIM_2D];
 			MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
-			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1])
+			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
 			// send grid dimensions
-			int shift = rank -1;
+			int shift = rank - 1;
 			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d, &req[shift+0]);
 			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d, &req[shift+1]);
 			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d, &req[shift+2]);
