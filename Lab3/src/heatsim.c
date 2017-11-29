@@ -249,7 +249,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		* Comment traiter le cas de rank=0 ?
 		*/
 		
-		const n_sends = 4 * (ctx->numprocs -1);
+		const int n_sends = 4 * (ctx->numprocs -1);
 		MPI_Request req[n_sends];
 		MPI_Status status[n_sends];
 		
@@ -263,9 +263,9 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			int shift = rank -1;
 
 			// send grid dimensions
-			MPI_ISend(&buf->width, 1, MPI_INTEGER, rank, shift+0, ctx->comm2d, &req[shift+0]);
-			MPI_ISend(&buf->height, 1, MPI_INTEGER, rank, shift+1, ctx->comm2d, &req[shift+1]);
-			MPI_ISend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, &req[shift+2]);
+			MPI_Isend(&buf->width, 1, MPI_INTEGER, rank, shift+0, ctx->comm2d, &req[shift+0]);
+			MPI_Isend(&buf->height, 1, MPI_INTEGER, rank, shift+1, ctx->comm2d, &req[shift+1]);
+			MPI_Isend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, &req[shift+2]);
 
 			// send grid data
 			MPI_ISend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, &req[shift+3]);
@@ -284,17 +284,20 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 	    free(status);
 
 	}else{
+		MPI_Request req[4];
 		MPI_Status status[4];
 
 		int width, height, padding;
-		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &status[0]);
-		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &status[1]);
-		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &status[2]);
+		MPI_Irecv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &status[0]);
+		MPI_Irecv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &status[1]);
+		MPI_Irecv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &status[2]);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &status[3]);
+		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &status[3]);
 
+		MPI_Waitall(4, req, status);
+	   	free(req);
 		free(status);
 
 	}
