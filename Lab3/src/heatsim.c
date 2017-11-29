@@ -248,9 +248,6 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		* FIXME: send grid dimensions and data
 		* Comment traiter le cas de rank=0 ?
 		*/
-		const int n_procs = ctx->numprocs -1;  // number of processess but that of rank 0 (current)
-		MPI_Request req[4 * n_procs];
-		MPI_Status status[4 * n_procs];
 		for (int rank=1; rank<ctx->numprocs; ++rank)
 		{
 			//
@@ -260,12 +257,12 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 
 			// send grid dimensions
 			int shift = rank - 1;
-			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d, &req[shift+0]);
-			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d, &req[shift+1]);
-			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d, &req[shift+2]);
+			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d);
+			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d);
+			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d);
 
 			// send grid data
-			MPI_Send(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, 3, ctx->comm2d, &req[shift+3]);
+			MPI_Send(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, 3, ctx->comm2d);
 		}
 		free(req);
 		free(status);
@@ -280,17 +277,14 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 
 	}else{
 
-		MPI_Request req[4];
-		MPI_Status status[4];
-
 		int width, height, padding;
-		MPI_Recv(&width, 1, MPI_INTEGER, rank, 0, ctx->comm2d, &req[0]);
-		MPI_Recv(&height, 1, MPI_INTEGER, rank, 1, ctx->comm2d, &req[1]);
-		MPI_Recv(&padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d, &req[2]);
+		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, 0, ctx->comm2d);
+		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, 1, ctx->comm2d);
+		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, 2, ctx->comm2d);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, rank, 3, ctx->comm2d, &req[3]);
+		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d);
 
 	}
 
