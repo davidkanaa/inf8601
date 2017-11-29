@@ -260,15 +260,15 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
 			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
-			int shift = rank -1;
+			int shift = 4 * (rank -1);
 
 			// send grid dimensions
-			MPI_Isend(&buf->width, 1, MPI_INTEGER, rank, shift+0, ctx->comm2d, &req[shift+0]);
-			MPI_Isend(&buf->height, 1, MPI_INTEGER, rank, shift+1, ctx->comm2d, &req[shift+1]);
-			MPI_Isend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, &req[shift+2]);
+			MPI_Isend(&buf->width, 1, MPI_INTEGER, rank, shift, ctx->comm2d, req+shift);
+			MPI_Isend(&buf->height, 1, MPI_INTEGER, rank, shift+1, ctx->comm2d, req+shift+1);
+			MPI_Isend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, req+shift+2);
 
 			// send grid data
-			MPI_Isend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, &req[shift+3]);
+			MPI_Isend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, req+shift+3);
 		}
 
 		/*
@@ -287,14 +287,16 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Request req[4];
 		MPI_Status status[4];
 
+		int tag = 4 * (ctx->rank -1);
+
 		int width, height, padding;
-		MPI_Irecv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &req[0]);
-		MPI_Irecv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &req[1]);
-		MPI_Irecv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &req[2]);
+		MPI_Irecv(&width, 1, MPI_INTEGER, 0, tag+0, ctx->comm2d, &req[0]);
+		MPI_Irecv(&height, 1, MPI_INTEGER, 0, tag+1, ctx->comm2d, &req[1]);
+		MPI_Irecv(&padding, 1, MPI_INTEGER, 0, tag+2, ctx->comm2d, &req[2]);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &req[3]);
+		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, 0, tag+3, ctx->comm2d, &req[3]);
 
 		MPI_Waitall(4, req, status);
 	   	free(req);
@@ -369,6 +371,8 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
 
 	MPI_Waitall(8, req, status);
+	free(req);
+	free(status);
 	
 }
 
