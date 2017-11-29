@@ -250,8 +250,8 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		*/
 		
 		const int n_sends = 4 * (ctx->numprocs -1);
-		MPI_Request req[n_sends];
-		MPI_Status status[n_sends];
+		MPI_Request req = calloc(n_sends*sizeof(MPI_Request));
+		MPI_Status status = calloc(n_sends*sizeof(MPI_Status));
 		
 		for (int rank=1; rank<ctx->numprocs; ++rank)
 		{
@@ -280,8 +280,6 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
 		MPI_Waitall(n_sends, req, status);
-	   	//free(req);
-	    //free(status);
 
 	} else{
 		MPI_Request req[4];
