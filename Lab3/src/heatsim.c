@@ -256,7 +256,6 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
 			// send grid dimensions
-			int shift = rank - 1;
 			MPI_Send(&buf->width, 1, MPI_INTEGER, rank, 0, ctx->comm2d);
 			MPI_Send(&buf->height, 1, MPI_INTEGER, rank, 1, ctx->comm2d);
 			MPI_Send(&buf->padding, 1, MPI_INTEGER, rank, 2, ctx->comm2d);
@@ -326,7 +325,7 @@ void exchng2d(ctx_t *ctx) {
 	grid_t *grid = ctx->next_grid;
 	int width = grid->pw;
 	int height = grid->ph;
-	int *data = grid->dbl;
+	double *data = grid->dbl;
 	MPI_Comm comm = ctx->comm2d;
 
 	//
@@ -339,10 +338,10 @@ void exchng2d(ctx_t *ctx) {
 	int *offset_recv_east = data + (width -1);
 	int *offset_recv_west = data;
 	
-	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm1d, &req[0]);
-	MPI_Irecv(offset_recv_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm1d, &req[1]);
-	MPI_Irecv(offset_recv_east, 1, ctx->vector, ctx->east_peer, 2, comm1d, &req[2]);
-	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm1d, &req[3]);
+	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[0]);
+	MPI_Irecv(offset_recv_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[1]);
+	MPI_Irecv(offset_recv_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[2]);
+	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[3]);
 
 	// send mpi message
 	int *offset_send_north = data + width;
@@ -350,10 +349,10 @@ void exchng2d(ctx_t *ctx) {
 	int *offset_send_east = data + (width -2);
 	int *offset_send_west = data + 1;
 	
-	MPI_Irecv(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm1d, &req[4]);
-	MPI_Irecv(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm1d, &req[5]);
-	MPI_Irecv(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm1d, &req[6]);
-	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm1d, &req[7]);
+	MPI_Irecv(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
+	MPI_Irecv(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
+	MPI_Irecv(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[6]);
+	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
 
 	MPI_Waitall(8, req, status);
 	
