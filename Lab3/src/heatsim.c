@@ -390,7 +390,7 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
             if(rank_process != 0) 
             {
                 int size_grid = local_grid->height*local_grid->width;
-                MPI_Recv(buf->dbl, grid_size, MPI_DOUBLE, rank_process, 0, comm, MPI_STATUS_IGNORE);
+                MPI_Recv(tmp_grid->dbl, size_grid, MPI_DOUBLE, rank_process, 0, comm, MPI_STATUS_IGNORE);
             }
             else
             {
