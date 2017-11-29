@@ -249,7 +249,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		* Comment traiter le cas de rank=0 ?
 		*/
 		
-		const int n_sends = 4 * (ctx->numprocs -1);
+		int n_sends = 4 * (ctx->numprocs -1);
 		MPI_Request req = calloc(n_sends*sizeof(MPI_Request));
 		MPI_Status status = calloc(n_sends*sizeof(MPI_Status));
 		
@@ -360,10 +360,10 @@ void exchng2d(ctx_t *ctx) {
 	double *offset_send_east = data + (width -2);
 	double *offset_send_west = data + 1;
 	
-	MPI_Irecv(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
-	MPI_Irecv(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
-	MPI_Irecv(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[6]);
-	MPI_Irecv(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
+	MPI_Isend(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
+	MPI_Isend(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
+	MPI_Isend(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[6]);
+	MPI_Isend(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
 
 	MPI_Waitall(8, req, status);
 	
