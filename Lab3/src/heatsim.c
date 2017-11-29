@@ -388,7 +388,7 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 	} else {
         for(int rank = 1; rank < ctx->numprocs; ++rank) {
 			int coordinates[DIM_2D];
-            MPI_Cart_coords(comm, rank_process, DIM_2D, coordinates);
+            MPI_Cart_coords(comm, rank, DIM_2D, coordinates);
 
 			grid_t *tmp_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
             if(rank != 0) 
