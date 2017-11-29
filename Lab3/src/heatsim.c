@@ -268,7 +268,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			MPI_Isend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, &req[shift+2]);
 
 			// send grid data
-			MPI_ISend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, &req[shift+3]);
+			MPI_Isend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, &req[shift+3]);
 		}
 
 		/*
@@ -288,13 +288,13 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Status status[4];
 
 		int width, height, padding;
-		MPI_Irecv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &status[0]);
-		MPI_Irecv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &status[1]);
-		MPI_Irecv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &status[2]);
+		MPI_Irecv(&width, 1, MPI_INTEGER, ctx->rank, ctx->rank+0, ctx->comm2d, &req[0]);
+		MPI_Irecv(&height, 1, MPI_INTEGER, ctx->rank, ctx->rank+1, ctx->comm2d, &req[1]);
+		MPI_Irecv(&padding, 1, MPI_INTEGER, ctx->rank, ctx->rank+2, ctx->comm2d, &req[2]);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &status[3]);
+		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &req[3]);
 
 		MPI_Waitall(4, req, status);
 	   	free(req);
@@ -397,7 +397,7 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
             if(rank != 0) 
             {
                 int size_grid = local_grid->height*local_grid->width;
-                MPI_Recv(tmp_grid->dbl, size_grid, MPI_DOUBLE, rank_process, 0, comm, MPI_STATUS_IGNORE);
+                MPI_Recv(tmp_grid->dbl, size_grid, MPI_DOUBLE, rank, 0, comm, MPI_STATUS_IGNORE);
             }
             else
             {
