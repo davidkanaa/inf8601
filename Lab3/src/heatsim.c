@@ -280,10 +280,10 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
 		MPI_Waitall(n_sends, req, status);
-	   	free(req);
-	    free(status);
+	   	//free(req);
+	    //free(status);
 
-	}else{
+	} else{
 		MPI_Request req[4];
 		MPI_Status status[4];
 
