@@ -333,10 +333,10 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Status status[8];
 
 	// receive mpi message
-	int *offset_recv_north = data;
-	int *offset_recv_south = data + (height -1) * width;
-	int *offset_recv_east = data + (width -1);
-	int *offset_recv_west = data;
+	double *offset_recv_north = data;
+	double *offset_recv_south = data + (height -1) * width;
+	double *offset_recv_east = data + (width -1);
+	double *offset_recv_west = data;
 	
 	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[0]);
 	MPI_Irecv(offset_recv_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[1]);
@@ -344,10 +344,10 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[3]);
 
 	// send mpi message
-	int *offset_send_north = data + width;
-	int *offset_send_south = data + (height -2) * width;
-	int *offset_send_east = data + (width -2);
-	int *offset_send_west = data + 1;
+	double *offset_send_north = data + width;
+	double *offset_send_south = data + (height -2) * width;
+	double *offset_send_east = data + (width -2);
+	double *offset_send_west = data + 1;
 	
 	MPI_Irecv(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
 	MPI_Irecv(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
