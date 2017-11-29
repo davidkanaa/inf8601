@@ -264,8 +264,6 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			// send grid data
 			MPI_Send(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, 3, ctx->comm2d);
 		}
-		free(req);
-		free(status);
 
 		/*
 		* FIXME: receive dimensions of the grid
@@ -276,15 +274,18 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
 	}else{
+		MPI_Status status[4];
 
 		int width, height, padding;
-		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, 0, ctx->comm2d);
-		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, 1, ctx->comm2d);
-		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, 2, ctx->comm2d);
+		MPI_Recv(&width, 1, MPI_INTEGER, ctx->rank, 0, ctx->comm2d, &status[0]);
+		MPI_Recv(&height, 1, MPI_INTEGER, ctx->rank, 1, ctx->comm2d, &status[1]);
+		MPI_Recv(&padding, 1, MPI_INTEGER, ctx->rank, 2, ctx->comm2d, &status[2]);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d);
+		MPI_Recv(new_grid->dbl, height * width, MPI_INTEGER, ctx->rank, 3, ctx->comm2d, &status[3]);
+
+		free(status);
 
 	}
 
@@ -300,8 +301,8 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 	free_grid(new_grid);
 
 	/* FIXME: create type vector to exchange columns */
-	MPI_Type_vector(ctx->curr_grid->ph, ctx->curr_grid->pw, ctx->curr_grid->padding, MPI_DOUBLE, ctx->vector);
-	MPI_Type_commit(ctx->vector);
+	MPI_Type_vector(ctx->curr_grid->ph, ctx->curr_grid->pw, ctx->curr_grid->padding, MPI_DOUBLE, &ctx->vector);
+	MPI_Type_commit(&ctx->vector);
 
 	return 0;
 	err: return -1;
