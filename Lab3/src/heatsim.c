@@ -269,7 +269,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 				MPI_Isend(&buf->padding, 1, MPI_INTEGER, rank, shift+2, ctx->comm2d, req+shift+2);
 
 				// send grid data
-				MPI_Isend(buf->dbl, buf->height * buf->width, MPI_INTEGER, rank, shift+3, ctx->comm2d, req+shift+3);
+				MPI_Isend(buf->dbl, buf->ph * buf->pw, MPI_DOUBLE, rank, shift+3, ctx->comm2d, req+shift+3);
 			}
 
 			MPI_Waitall(n_sends, req, status);
@@ -297,12 +297,13 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Irecv(&width, 1, MPI_INTEGER, 0, tag+0, ctx->comm2d, &req[0]);
 		MPI_Irecv(&height, 1, MPI_INTEGER, 0, tag+1, ctx->comm2d, &req[1]);
 		MPI_Irecv(&padding, 1, MPI_INTEGER, 0, tag+2, ctx->comm2d, &req[2]);
+		MPI_Waitall(3, req, status);
 
 		//
 		new_grid = make_grid(width, height, padding);
-		MPI_Irecv(new_grid->dbl, height * width, MPI_INTEGER, 0, tag+3, ctx->comm2d, &req[3]);
+		MPI_Irecv(new_grid->dbl, height * width, MPI_DOUBLE, 0, tag+3, ctx->comm2d, &req[3]);
 
-		MPI_Waitall(4, req, status);
+		MPI_Waitall(1, req+3, status+3);
 	}
 
 	/* Utilisation temporaire de global_grid */
@@ -315,10 +316,10 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 	ctx->curr_grid = grid_padding(new_grid, 1);
 	ctx->next_grid = grid_padding(new_grid, 1);
 	ctx->heat_grid = grid_padding(new_grid, 1);
-	free_grid(new_grid);
+	//free_grid(new_grid);
 
 	/* FIXME: create type vector to exchange columns */
-	MPI_Type_vector(ctx->curr_grid->ph, ctx->curr_grid->pw, ctx->curr_grid->padding, MPI_DOUBLE, &ctx->vector);
+	MPI_Type_vector(ctx->curr_grid->ph, 1, ctx->curr_grid->pw, MPI_DOUBLE, &ctx->vector);
 	MPI_Type_commit(&ctx->vector);
 
 	return 0;
@@ -340,7 +341,7 @@ void exchng2d(ctx_t *ctx) {
 	 * 4 echanges doivent etre effectues
 	 */
 	
-	grid_t *grid = ctx->next_grid;
+	grid_t *grid = ctx->curr_grid;
 
 	int width = grid->pw;
 	int height = grid->ph;
@@ -354,16 +355,16 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Status status[8];
 
 	// mem locations to send
-	double *offset_send_north = data + padding*(width +1);
-	double *offset_send_south = data + (height -padding +1)*width +padding;
-	double *offset_send_east = data + (padding +1)*width -1;
-	double *offset_send_west = data + padding*(width +1);
+	double *offset_send_north = data + padding*width;
+	double *offset_send_south = data + (height -padding -1)*width;
+	double *offset_send_east = data + width -padding -1;
+	double *offset_send_west = data + padding*width;
 
 	// mem locations to receive
-	double *offset_recv_north = offset_send_north - width;
+	double *offset_recv_north = offset_send_north - padding*width;
 	double *offset_recv_south = offset_send_south + width;
 	double *offset_recv_east = offset_send_east + 1;
-	double *offset_recv_west = offset_send_west -1;
+	double *offset_recv_west = offset_send_west -padding*width;
 	
 	// receive mpi message
 	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[0]);
@@ -372,10 +373,10 @@ void exchng2d(ctx_t *ctx) {
 	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[3]);
 
 	// send mpi message
-	MPI_Isend(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
-	MPI_Isend(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
-	MPI_Isend(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[6]);
-	MPI_Isend(offset_send_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[7]);
+	MPI_Isend(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 1, comm, &req[4]);
+	MPI_Isend(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 0, comm, &req[5]);
+	MPI_Isend(offset_send_east, 1, ctx->vector, ctx->east_peer, 3, comm, &req[6]);
+	MPI_Isend(offset_send_west, 1, ctx->vector, ctx->west_peer, 2, comm, &req[7]);
 
 	MPI_Waitall(8, req, status);
 	
@@ -384,11 +385,10 @@ void exchng2d(ctx_t *ctx) {
 int gather_result(ctx_t *ctx, opts_t *opts) {
 	
 	int ret = 0;
+	grid_t *buf;
 	grid_t *local_grid = grid_padding(ctx->next_grid, 0);
 	if (local_grid == NULL)
 		goto err;
-
-	MPI_Comm comm = ctx->comm2d;
 	
 	/*
 	 * FIXME: transfer simulation results from all process to rank=0
@@ -410,7 +410,7 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 				int coordinates[DIM_2D];
 				MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
 				
-				grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+				buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 				MPI_Irecv(buf->dbl, buf->width*buf->height, MPI_DOUBLE, rank, rank, ctx->comm2d, req + rank-1);
 			}
 			MPI_Waitall(n_procs, req, status);
@@ -421,7 +421,7 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 		int coordinates[DIM_2D];
 		MPI_Cart_coords(ctx->comm2d, 0, DIM_2D, coordinates);
 
-		grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+		buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 		grid_copy(ctx->next_grid, buf);
 		
 		// merge all
@@ -432,9 +432,9 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
         MPI_Request req;
         MPI_Status status;
         
-        grid_t *buf = grid_padding(ctx->next_grid, 0);        
+        buf = grid_padding(ctx->next_grid, 0);        
         MPI_Isend(buf->dbl, buf->height*buf->width, MPI_DOUBLE, 0, ctx->rank, ctx->comm2d, &req);
-		
+
         MPI_Waitall(1, &req, &status);
     }
 
