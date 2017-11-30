@@ -285,7 +285,9 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 		MPI_Cart_coords(ctx->comm2d, 0, DIM_2D, coordinates);
 		new_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
 
-	} else{
+	}
+	else
+	{
 		MPI_Request req[4];
 		MPI_Status status[4];
 
@@ -308,6 +310,7 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 
 	if (new_grid == NULL)
 		goto err;
+
 	/* set padding required for Runge-Kutta */
 	ctx->curr_grid = grid_padding(new_grid, 1);
 	ctx->next_grid = grid_padding(new_grid, 1);
@@ -338,32 +341,37 @@ void exchng2d(ctx_t *ctx) {
 	 */
 	
 	grid_t *grid = ctx->next_grid;
+
 	int width = grid->pw;
 	int height = grid->ph;
+	int padding = grid->padding;
 	double *data = grid->dbl;
+	
 	MPI_Comm comm = ctx->comm2d;
 
 	//
 	MPI_Request req[8];
 	MPI_Status status[8];
 
-	// receive mpi message
-	double *offset_recv_north = data;
-	double *offset_recv_south = data + (height -1) * width;
-	double *offset_recv_east = data + (width -1);
-	double *offset_recv_west = data;
+	// mem locations to send
+	double *offset_send_north = data + padding*(width +1);
+	double *offset_send_south = data + (height -padding +1)*width +padding;
+	double *offset_send_east = data + (padding +1)*width -1;
+	double *offset_send_west = data + padding*(width +1);
+
+	// mem locations to receive
+	double *offset_recv_north = offset_send_north - width;
+	double *offset_recv_south = offset_send_south + width;
+	double *offset_recv_east = offset_send_east + 1;
+	double *offset_recv_west = offset_send_west -1;
 	
+	// receive mpi message
 	MPI_Irecv(offset_recv_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[0]);
 	MPI_Irecv(offset_recv_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[1]);
 	MPI_Irecv(offset_recv_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[2]);
 	MPI_Irecv(offset_recv_west, 1, ctx->vector, ctx->west_peer, 3, comm, &req[3]);
 
 	// send mpi message
-	double *offset_send_north = data + width;
-	double *offset_send_south = data + (height -2) * width;
-	double *offset_send_east = data + (width -2);
-	double *offset_send_west = data + 1;
-	
 	MPI_Isend(offset_send_north, width, MPI_DOUBLE, ctx->north_peer, 0, comm, &req[4]);
 	MPI_Isend(offset_send_south, width, MPI_DOUBLE, ctx->south_peer, 1, comm, &req[5]);
 	MPI_Isend(offset_send_east, 1, ctx->vector, ctx->east_peer, 2, comm, &req[6]);
