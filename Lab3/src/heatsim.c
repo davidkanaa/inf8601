@@ -394,30 +394,49 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 	 * FIXME: transfer simulation results from all process to rank=0
 	 * use grid for this purpose
 	 */
-	if(ctx->rank != 0) {
-		int size_grid = local_grid->height*local_grid->width;
-		MPI_Send(local_grid->dbl, size_grid, MPI_DOUBLE, 0, 0, comm);
-	} else {
-        for(int rank = 1; rank < ctx->numprocs; ++rank) {
-			int coordinates[DIM_2D];
-            MPI_Cart_coords(comm, rank, DIM_2D, coordinates);
+	if(ctx->rank == 0)
+    {
+		// number of secondary process
+		int n_procs = ctx->numprocs-1;
+		if(n_procs > 0)
+		{
+		
+			//
+			MPI_Request *req = (MPI_Request *) calloc(n_procs, sizeof(MPI_Request));
+			MPI_Status *status = (MPI_Status *) calloc(n_procs, sizeof(MPI_Status));
 
-			grid_t *tmp_grid = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
-            if(rank != 0) 
-            {
-                int size_grid = local_grid->height*local_grid->width;
-                MPI_Recv(tmp_grid->dbl, size_grid, MPI_DOUBLE, rank, 0, comm, MPI_STATUS_IGNORE);
-            }
-            else
-            {
-                grid_copy(local_grid, tmp_grid);
-            }
+			for (int rank = 1; rank <= n_procs; ++rank)
+			{
+				int coordinates[DIM_2D];
+				MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
+				
+				grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+				MPI_Irecv(buf->dbl, buf->width*buf->height, MPI_DOUBLE, rank, rank, ctx->comm2d, req + rank-1);
+			}
+			MPI_Waitall(n_procs, req, status);
+			free(req);
+			free(status);
 		}
-	} 
+		
+		int coordinates[DIM_2D];
+		MPI_Cart_coords(ctx->comm2d, 0, DIM_2D, coordinates);
 
-	/* now we can merge all data blocks, reuse global_grid */
-	if (ctx->rank == 0)
-        cart2d_grid_merge(ctx->cart, ctx->global_grid);
+		grid_t *buf = cart2d_get_grid(ctx->cart, coordinates[0], coordinates[1]);
+		grid_copy(ctx->next_grid, buf);
+		
+		// merge all
+		cart2d_grid_merge(ctx->cart, ctx->global_grid);
+    }
+    else
+    {
+        MPI_Request req;
+        MPI_Status status;
+        
+        grid_t *buf = grid_padding(ctx->next_grid, 0);        
+        MPI_Isend(buf->dbl, buf->height*buf->width, MPI_DOUBLE, 0, ctx->rank, ctx->comm2d, &req);
+		
+        MPI_Waitall(1, &req, &status);
+    }
 
 	done: free_grid(local_grid);
 	return ret;
