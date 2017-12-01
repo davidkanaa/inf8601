@@ -196,7 +196,6 @@ void free_ctx(ctx_t *ctx) {
 }
 
 int init_ctx(ctx_t *ctx, opts_t *opts) {
-	TODO("lab3");
 	MPI_Comm_size(MPI_COMM_WORLD, &ctx->numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &ctx->rank);
 
@@ -254,7 +253,8 @@ int init_ctx(ctx_t *ctx, opts_t *opts) {
 			MPI_Request *req = calloc(n_sends, sizeof(MPI_Request));
 			MPI_Status *status = calloc(n_sends, sizeof(MPI_Status));
 			
-			for (int rank=1; rank<ctx->numprocs; ++rank)
+			int rank;
+			for (rank=1; rank<ctx->numprocs; ++rank)
 			{
 				//
 				int coordinates[DIM_2D];
@@ -405,7 +405,8 @@ int gather_result(ctx_t *ctx, opts_t *opts) {
 			MPI_Request *req = (MPI_Request *) calloc(n_procs, sizeof(MPI_Request));
 			MPI_Status *status = (MPI_Status *) calloc(n_procs, sizeof(MPI_Status));
 
-			for (int rank = 1; rank <= n_procs; ++rank)
+			int rank;
+			for (rank = 1; rank <= n_procs; ++rank)
 			{
 				int coordinates[DIM_2D];
 				MPI_Cart_coords(ctx->comm2d, rank, DIM_2D, coordinates);
